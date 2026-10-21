@@ -1,4 +1,4 @@
-// Szene: "Mal angenommen … es gibt keine Regeln mehr" (Purge-Nacht in einer Low-Poly-Kleinstadt)
+// Szene: "Mal angenommen … es gibt keine Regeln mehr" (60 s, Purge-Nacht in einer Low-Poly-Kleinstadt)
 import * as THREE from "three";
 import * as K from "./lowpoly-kit.js";
 
@@ -10,13 +10,14 @@ const hudSub = document.getElementById("hud-sub");
 
 const renderer = K.createRenderer(canvas, W, H);
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog("#eab08f", 140, 620);
-const camera = new THREE.PerspectiveCamera(55, W / H, 0.3, 2000);
+scene.fog = new THREE.Fog("#f4b88f", 150, 640);
+const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 2000);
 const sky = K.createSky();
 scene.add(sky.mesh);
 const lights = K.createLights(scene);
 const rand = K.mulberry32(1907);
 const pick = (arr) => arr[Math.floor(rand() * arr.length)];
+const between = (t, a, b) => t >= a && t < b;
 
 // ---------- Stimmungen ----------
 const DUSK = {
@@ -25,15 +26,25 @@ const DUSK = {
 };
 const PURGE = {
   top: "#0d0610", horizon: "#8a1a2a", bottom: "#1c0b12", fog: "#3a1019", fogNear: 40, fogFar: 300,
-  sun: "#ff8a78", sunI: 0.55, hemiSky: "#8a3e5c", hemiGround: "#1d0f16", hemiI: 0.75, sunDir: [0.35, 0.62, -0.7], sunGlow: 0,
+  sun: "#ff8a78", sunI: 0.55, hemiSky: "#8a3e5c", hemiGround: "#1d0f16", hemiI: 0.8, sunDir: [0.35, 0.62, -0.7], sunGlow: 0,
+};
+const DEEP = { // 3 Uhr nachts: kälter, dunkler
+  top: "#06040b", horizon: "#3c1534", bottom: "#0d0710", fog: "#1c0c1a", fogNear: 25, fogFar: 230,
+  sun: "#9a8cff", sunI: 0.4, hemiSky: "#54406e", hemiGround: "#100b14", hemiI: 0.65, sunDir: [0.3, 0.7, -0.6], sunGlow: 0,
 };
 const DAWN = {
   top: "#6c88c6", horizon: "#ffc7a0", bottom: "#6a8a55", fog: "#f7c8a6", fogNear: 130, fogFar: 620,
   sun: "#ffd9b2", sunI: 2.3, hemiSky: "#ffe8d2", hemiGround: "#4c6c40", hemiI: 1.15, sunDir: [0.62, 0.16, -0.77], sunGlow: 1,
 };
+const MORNING = {
+  top: "#7da5de", horizon: "#ffe4c4", bottom: "#6a8a55", fog: "#f3dcc8", fogNear: 140, fogFar: 700,
+  sun: "#fff1dc", sunI: 2.7, hemiSky: "#fff6ea", hemiGround: "#4e6e42", hemiI: 1.3, sunDir: [0.55, 0.32, -0.77], sunGlow: 1,
+};
 const MOOD = [
   [0, DUSK], [C.sirenOn, DUSK], [C.sirenOn + 1.4, PURGE],
-  [C.dawnStart, PURGE], [C.dawnStart + 1.6, DAWN], [30, DAWN],
+  [C.threeAm - 0.12, PURGE], [C.threeAm - 0.02, DEEP],
+  [C.dawnStart - 0.03, DEEP], [C.dawnStart + 0.02, DAWN],
+  [C.shuttersUp, DAWN], [C.shuttersUp + 1.4, MORNING], [60, MORNING],
 ];
 
 // ---------- Boden & Straßen ----------
@@ -46,6 +57,20 @@ function slab(x, z, sx, sz, color, y = 0.02, h = 0.04) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(sx, h, sz), K.lambert(color));
   m.position.set(x, y, z);
   m.receiveShadow = true;
+  scene.add(m);
+  return m;
+}
+function box(sx, sy, sz, color, x, y, z, parent = scene) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), K.lambert(color));
+  m.position.set(x, y, z);
+  m.castShadow = m.receiveShadow = true;
+  parent.add(m);
+  return m;
+}
+function plane(w, h, mat, x, y, z, rotY) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.set(x, y, z);
+  m.rotation.y = rotY;
   scene.add(m);
   return m;
 }
@@ -71,24 +96,22 @@ const WALLS = ["#ece6d8", "#e2d5bd", "#d3d1cc", "#efe0c6", "#cfd8db", "#e8d9cf"]
 const ROOFS = ["#c4553b", "#c4553b", "#8a909a", "#b5492f", "#7f858f"];
 const inCross = (z, pad = 10) => EW.some((e) => Math.abs(z - e) < pad);
 
-// Wohnstraße an der Hauptstraße
 for (let z = -28; z >= -112; z -= 12) {
   field.add(-13, z, { w: 8, d: 8, facing: "x+", wall: pick(WALLS), roof: pick(ROOFS), data: { row: "L" } });
   field.add(13, z, { w: 8, d: 8, facing: "x-", wall: pick(WALLS), roof: pick(ROOFS), data: { row: "R" } });
 }
-// Hauptstraße Nord
+const NORTH_DOORS = [];
 for (let z = 50; z <= 210; z += 13) {
   if (inCross(z)) continue;
   field.add(-13, z, { w: 8, d: 8, facing: "x+", wall: pick(WALLS), roof: pick(ROOFS) });
   field.add(13, z, { w: 8, d: 8, facing: "x-", wall: pick(WALLS), roof: pick(ROOFS) });
+  if (z < 95) NORTH_DOORS.push(z);
 }
-// Hauptstraße Süd (hinter dem Supermarkt)
 for (let z = -160; z >= -290; z -= 13) {
   if (inCross(z)) continue;
   field.add(-13, z, { w: 8, d: 8, facing: "x+", wall: pick(WALLS), roof: pick(ROOFS) });
   field.add(13, z, { w: 8, d: 8, facing: "x-", wall: pick(WALLS), roof: pick(ROOFS) });
 }
-// Raster der übrigen Straßen
 const treeSpots = [];
 NS.filter((x) => x !== 0).forEach((sx) => {
   for (let z = -290; z <= 220; z += 13) {
@@ -106,39 +129,86 @@ for (let z = -112; z <= -28; z += 6) {
 }
 K.addTrees(scene, treeSpots);
 
-// Nachbarhaus (links, z = -40): Fenster k = 0 bleibt an
+// Fenster-Zustände: Welle beim Runterlassen, Welle beim Hochziehen am Morgen
 let neighborWin = null;
+const peekWins = [];
 field.windows.forEach((w) => {
   w.litDusk = rand() < 0.7;
   if (w.house.data.row) {
     const along = K.clamp((-28 - w.z) / 90);
     w.tOff = K.lerp(C.shutterStart, C.shutterEnd, along) + rand() * 0.25;
+    w.tUp = C.shuttersUp + along * 1.1 + rand() * 0.3;
   } else {
     w.tOff = C.sirenOn + 1.4 + rand() * (C.shutterEnd - C.sirenOn - 1.4);
+    w.tUp = C.shuttersUp + rand() * 2.5;
   }
-  if (w.house.data.row === "L" && w.house.z === -40 && w.k === 0) neighborWin = w;
+  const L = w.house.data.row === "L";
+  if (L && w.house.z === -40 && w.k === 0) neighborWin = w;
+  if (L && ((w.house.z === -52 && w.k === 0) || (w.house.z === -64 && w.k === 1) || (w.house.z === -76 && w.k === 0))) peekWins.push(w);
 });
 neighborWin.neighbor = true;
-neighborWin.litDusk = true;
+peekWins.forEach((w) => { w.peek = true; });
 field.build(scene);
+const yourDoorIdx = field.doors.findIndex((d) => Math.abs(d.x - 8.97) < 0.1 && Math.abs(d.z + 40) < 0.1);
+
+// Fenster mit Innenleben (Licht + Vorhang + optional Silhouette + Fensterkreuz)
+const TW = 320, TH = 330;
+const roomTex = K.canvasTexture(TW, TH, (g, w, h) => {
+  const grd = g.createRadialGradient(w * 0.58, h * 0.25, 10, w * 0.5, h * 0.45, w * 0.8);
+  grd.addColorStop(0, "#fff1c4");
+  grd.addColorStop(0.5, "#ffc96e");
+  grd.addColorStop(1, "#c9762f");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 6; i++) {
+    g.fillStyle = i % 2 ? "#b4582a" : "#9c4723";
+    g.fillRect(i * 13, 0, 14, h);
+  }
+});
+const bustTex = K.canvasTexture(TW, TH, (g, w, h) => {
+  g.fillStyle = "#0c0a0c";
+  g.beginPath();
+  g.ellipse(w * 0.6, h * 0.36, 34, 41, 0.08, 0, Math.PI * 2);
+  g.fill();
+  g.fillRect(w * 0.6 - 14, h * 0.45, 28, 26);
+  g.beginPath();
+  g.moveTo(w * 0.27, h);
+  g.bezierCurveTo(w * 0.29, h * 0.68, w * 0.4, h * 0.56, w * 0.6, h * 0.55);
+  g.bezierCurveTo(w * 0.8, h * 0.56, w * 0.93, h * 0.68, w * 0.95, h);
+  g.closePath();
+  g.fill();
+});
+const peekTex = K.canvasTexture(TW, TH, (g, w, h) => { // nur der Kopf unter dem halb offenen Rollladen
+  g.fillStyle = "#0c0a0c";
+  g.beginPath();
+  g.ellipse(w * 0.55, h * 0.86, 40, 46, 0, 0, Math.PI * 2);
+  g.fill();
+});
+const frameTex = K.canvasTexture(TW, TH, (g, w, h) => {
+  g.strokeStyle = "#f3efe6";
+  g.lineWidth = 14;
+  g.strokeRect(7, 7, w - 14, h - 14);
+  g.lineWidth = 10;
+  g.beginPath();
+  g.moveTo(w / 2, 0); g.lineTo(w / 2, h);
+  g.moveTo(0, h * 0.42); g.lineTo(w, h * 0.42);
+  g.stroke();
+});
+function windowArt(win, silTex) {
+  const NW = field.winW * 1.02, NH = field.winH * 1.02;
+  const mk = (tex, off) => {
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false });
+    plane(NW, NH, mat, win.x + win.n[0] * off, win.y, win.z, win.rotY);
+    return mat;
+  };
+  return { room: mk(roomTex, 0.02), sil: mk(silTex, 0.03), frame: mk(frameTex, 0.04) };
+}
+const neighborArt = windowArt(neighborWin, bustTex);
+const peekArts = peekWins.map((w) => windowArt(w, peekTex));
 
 // ---------- Polizeiwache ----------
 const policeSignMat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
 const policeLights = [];
-function box(sx, sy, sz, color, x, y, z, parent = scene) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), K.lambert(color));
-  m.position.set(x, y, z);
-  m.castShadow = m.receiveShadow = true;
-  parent.add(m);
-  return m;
-}
-function plane(w, h, mat, x, y, z, rotY) {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-  m.position.set(x, y, z);
-  m.rotation.y = rotY;
-  scene.add(m);
-  return m;
-}
 function makeCar(color, { police = false, burnt = false } = {}) {
   const g = new THREE.Group();
   box(2.0, 0.8, 4.4, burnt ? "#2a2626" : color, 0, 0.62, 0, g);
@@ -211,7 +281,7 @@ const rings = Array.from({ length: 4 }, () => {
 box(16, 7, 22, "#e4e1d8", 24, 3.5, -134);
 box(16.3, 0.5, 22.3, "#2d6a4f", 24, 7.1, -134);
 slab(12, -134, 8, 24, "#c9c7bf", 0.05, 0.1);
-plane(12, 2.2, new THREE.MeshBasicMaterial({ color: "#ffffff" }), 15.93, 5.75, -134, -Math.PI / 2).userData.sign = true;
+const marketSign = plane(12, 2.2, new THREE.MeshBasicMaterial({ color: "#ffffff" }), 15.93, 5.75, -134, -Math.PI / 2);
 const shelvesTex = K.canvasTexture(1024, 256, (g, w, h) => {
   const r = K.mulberry32(77);
   g.fillStyle = "#fff1d6";
@@ -251,12 +321,12 @@ const shardData = Array.from({ length: SHARDS }, () => ({
   s: 0.35 + rand() * 0.95,
 }));
 
-// ---------- Ampeln ----------
+// ---------- Ampel ----------
 const trafficLights = [];
 for (const x of [-6.6]) {
   box(0.24, 5, 0.24, "#5c6168", x, 2.5, -113.5);
   box(0.6, 1.6, 0.5, "#2a2d31", x, 5.6, -113.5);
-  const lamps = {};
+  const tlamps = {};
   for (const [name, y, col] of [["r", 6.1, "#ff3b30"], ["y", 5.6, "#ffc21a"], ["g", 5.1, "#38e07b"]]) {
     const mat = new THREE.MeshBasicMaterial({ color: col });
     const disc = new THREE.Mesh(new THREE.CircleGeometry(0.19, 16), mat);
@@ -265,143 +335,196 @@ for (const x of [-6.6]) {
     const glow = K.makeGlow(col, 2.6);
     glow.position.set(x, y, -113.1);
     scene.add(glow);
-    lamps[name] = { mat, glow, base: new THREE.Color(col) };
+    tlamps[name] = { mat, glow, base: new THREE.Color(col) };
   }
-  trafficLights.push(lamps);
+  trafficLights.push(tlamps);
 }
 
-// ---------- Straßenlaternen ----------
+// ---------- Straßenlaternen (Hauptstraße + Straße des Läufers) ----------
 const lamps = [];
+function addLamp(x, z, armDir) {
+  box(0.18, 6, 0.18, "#6b7078", x, 3, z);
+  const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), new THREE.MeshBasicMaterial({ color: "#fff0c8" }));
+  bulb.position.set(x + armDir * 0.7, 6.05, z);
+  scene.add(bulb);
+  const glow = K.makeGlow("#ffd59a", 4.2);
+  glow.position.copy(bulb.position);
+  scene.add(glow);
+  lamps.push({ bulb, glow, flick: rand() < 0.3, ph: rand() * 50 });
+}
 for (let z = -250; z <= 160; z += 24) {
   if (inCross(z, 16)) continue;
   for (const x of [-7.4, 7.4]) {
     if (x < 0 && z > 20 && z < 46) continue; // freie Sicht auf die Polizeiwache
-    box(0.18, 6, 0.18, "#6b7078", x, 3, z);
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.26, 8, 6), new THREE.MeshBasicMaterial({ color: "#fff0c8" }));
-    bulb.position.set(x * 0.9, 6.05, z);
-    scene.add(bulb);
-    const glow = K.makeGlow("#ffd59a", 4.2);
-    glow.position.copy(bulb.position);
-    scene.add(glow);
-    lamps.push({ bulb, glow, flick: rand() < 0.3, ph: rand() * 50 });
+    addLamp(x, z, -Math.sign(x));
   }
 }
+for (const z of [-92, -68, -44, -20]) addLamp(52.6, z, 1);
+addLamp(67.4, -64, -1);
+const runnerLight = new THREE.PointLight("#ffd59a", 0, 22, 1.3); // Lichtkegel über dem Versteck
+runnerLight.position.set(66.6, 5.8, -64);
+scene.add(runnerLight);
 
-// ---------- Autos ----------
+// ---------- Autos & Feuer ----------
 const CAR_COLORS = ["#c0392b", "#2e86de", "#f1c40f", "#95a5a6", "#ecf0f1", "#16a085", "#e67e22"];
-for (const [x, z, rot] of [[3.6, -46, 0], [-3.6, -61, Math.PI], [3.6, -58, 0], [-3.6, -96, Math.PI], [3.6, 58, 0], [-3.6, 82, Math.PI], [3.6, -170, 0]]) {
+for (const [x, z, rot] of [[3.6, -58, 0], [-3.6, -98, Math.PI], [3.6, 140, 0], [-3.6, 82, Math.PI], [3.6, -170, 0], [63.6, -57, 0], [56.4, -80, Math.PI]]) {
   const car = makeCar(pick(CAR_COLORS));
   car.position.set(x, 0.05, z);
   car.rotation.y = rot;
   scene.add(car);
 }
-const burnt = makeCar("#333333", { burnt: true });
-burnt.position.set(-1.2, 0.05, -104);
-burnt.rotation.y = 0.5;
-scene.add(burnt);
-const fire = Array.from({ length: 9 }, (_, i) => {
-  const s = K.makeGlow(i % 3 === 0 ? "#ffd04a" : "#ff6a1a", 2.4);
-  scene.add(s);
-  return { s, ox: (rand() - 0.5) * 1.8, oz: (rand() - 0.5) * 3, ph: rand() * 20 };
-});
-const fireLight = new THREE.PointLight("#ff7a2a", 0, 30, 1.4);
-fireLight.position.set(-1.2, 2.5, -104);
-scene.add(fireLight);
-
-// ---------- Figuren ----------
-const bystanders = Array.from({ length: 26 }, () => {
-  const p = K.makePerson({ body: pick(["#c0392b", "#2e86de", "#16a085", "#8e44ad", "#d35400", "#2c3e50", "#f39c12"]) });
-  const x = (rand() < 0.5 ? -1 : 1) * (5.6 + rand() * 1.6);
-  scene.add(p);
-  return { p, x, z0: -10 + rand() * 75, dir: rand() < 0.5 ? -1 : 1, sp: 0.6 + rand() * 0.8, ph: rand() * 10 };
+const fireCars = [[3.6, -70, 0, C.fire1], [-3.6, -86, Math.PI, C.fire2], [-1.2, -104, 0.5, C.fire3]].map(([x, z, rot, tIgn], i) => {
+  const normal = makeCar(pick(CAR_COLORS));
+  const burnt = makeCar("#333333", { burnt: true });
+  for (const c of [normal, burnt]) { c.position.set(x, 0.05, z); c.rotation.y = rot; scene.add(c); }
+  return { normal, burnt, tIgn, fire: K.makeFire(scene, [x, 0, z], { seed: 11 + i }), smoke: K.makeSmoke(scene, [x, 0, z], { seed: 21 + i }) };
 });
 
-const purgers = [[-2.6, 0], [-0.8, 1.8], [1.1, -0.6], [2.8, 2.4], [-1.9, 4.2], [0.4, 5.6], [2.4, 6.9]].map(([ox, oz], i) => {
-  const p = K.makePerson({ body: pick(["#16161b", "#22202a", "#2b2630"]), mask: true });
-  const flare = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.38, 6), K.basic("#ff3b2f"));
-  flare.position.set(0.4, 1.05, 0.18);
-  p.add(flare);
-  const glow = K.makeGlow("#ff3322", 2.6);
-  glow.position.set(0.4, 1.25, 0.18);
-  p.add(glow);
-  let light = null;
-  if (i % 2 === 0) {
-    light = new THREE.PointLight("#ff2a1a", 0, 18, 1.5);
-    light.position.set(0.4, 1.3, 0.3);
-    p.add(light);
-  }
-  scene.add(p);
-  return { p, ox, oz, glow, light, ph: rand() * 10 };
+// ---------- Menschen ----------
+const SHIRTS = ["#c0392b", "#2e86de", "#16a085", "#8e44ad", "#d35400", "#f1c40f", "#ecf0f1", "#7f8c8d", "#e84393", "#27ae60"];
+const PANTS = ["#2c3e50", "#3b5a8a", "#8a7a5a", "#1f1f24", "#5d4a3a"];
+const HAIR = ["#2b1d14", "#4a3222", "#c9a45a", "#8a8a8a", "#1a1a1a", "#7a3b1e"];
+const SKIN = ["#f0cfae", "#e5bd98", "#c99a72", "#8d5e3c", "#f3d6c1"];
+const civilian = (extra = {}) => ({
+  shirt: pick(SHIRTS), pants: pick(PANTS), hair: pick(HAIR), skin: pick(SKIN),
+  hairStyle: pick(["short", "short", "long", "bald", "cap"]), sleeves: rand() < 0.4 ? "short" : "long",
+  capColor: pick(["#b83a2e", "#2e5fb8", "#1f1f24"]), ...extra,
 });
-const looters = [[12, -128], [13.2, -137], [10.8, -141]].map(([x, z], i) => {
-  const p = K.makePerson({ body: "#1c1b22", mask: true });
-  p.position.set(x, 0.1, z);
-  p.rotation.y = Math.PI / 2;
-  if (i === 1) {
-    const glow = K.makeGlow("#ff3322", 2.6);
-    glow.position.set(0.4, 1.25, 0.18);
-    p.add(glow);
-  }
-  scene.add(p);
-  return { p, ph: rand() * 10 };
-});
-
-// Nachbarfenster: warmes Licht + Vorhang, dahinter taucht eine Gestalt auf, davor das Fensterkreuz
-const NW = field.winW * 1.25, NH = field.winH * 1.3;
-const layer = (tex, off, opacity = 1) => {
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity, depthWrite: false });
-  plane(NW, NH, mat, neighborWin.x + off, neighborWin.y, neighborWin.z, Math.PI / 2);
-  return mat;
+const PURGE_COLORS = ["#16161b", "#22202a", "#2b2630", "#1f2a22", "#3a1f22"];
+const purger = (extra = {}) => {
+  const c = pick(PURGE_COLORS);
+  return { shirt: c, pants: "#141418", shoes: "#0e0e10", mask: true, hood: true, hoodColor: c, skin: pick(SKIN), ...extra };
 };
-const TW = 320, TH = 330;
-layer(K.canvasTexture(TW, TH, (g, w, h) => {
-  const grd = g.createRadialGradient(w * 0.58, h * 0.25, 10, w * 0.5, h * 0.45, w * 0.8);
-  grd.addColorStop(0, "#fff1c4");
-  grd.addColorStop(0.5, "#ffc96e");
-  grd.addColorStop(1, "#c9762f");
-  g.fillStyle = grd;
-  g.fillRect(0, 0, w, h);
-  // Vorhang links mit Falten
-  for (let i = 0; i < 6; i++) {
-    g.fillStyle = i % 2 ? "#b4582a" : "#9c4723";
-    g.fillRect(i * 13, 0, 14, h);
+function spawn(opts) {
+  const ch = K.makeCharacter(opts);
+  ch.root.visible = false;
+  scene.add(ch.root);
+  return ch;
+}
+function addFlare(ch, withLight = false) {
+  const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.32, 6), new THREE.MeshBasicMaterial({ color: "#5a1a14" }));
+  stick.position.set(0, -0.06, 0.04);
+  stick.rotation.x = 0.9;
+  ch.arms[1].hand.add(stick);
+  const glow = K.makeGlow("#ff3322", 0.95);
+  glow.position.set(0, 0.06, 0.16);
+  ch.arms[1].hand.add(glow);
+  let light = null;
+  if (withLight) {
+    light = new THREE.PointLight("#ff2a1a", 0, 16, 1.5);
+    light.position.set(0, 0.1, 0.2);
+    ch.arms[1].hand.add(light);
   }
-  g.fillStyle = "rgba(90,30,10,0.35)";
-  g.fillRect(78, 0, 8, h);
-}), 0.05);
-const silMat = layer(K.canvasTexture(TW, TH, (g, w, h) => {
-  g.fillStyle = "#0c0a0c";
-  g.beginPath(); // Kopf leicht oval, etwas nach rechts versetzt
-  g.ellipse(w * 0.6, h * 0.36, 34, 41, 0.08, 0, Math.PI * 2);
-  g.fill();
-  g.fillRect(w * 0.6 - 14, h * 0.45, 28, 26); // Hals
-  g.beginPath(); // Schultern, unten vom Fensterrahmen abgeschnitten
-  g.moveTo(w * 0.27, h);
-  g.bezierCurveTo(w * 0.29, h * 0.68, w * 0.4, h * 0.56, w * 0.6, h * 0.55);
-  g.bezierCurveTo(w * 0.8, h * 0.56, w * 0.93, h * 0.68, w * 0.95, h);
-  g.closePath();
-  g.fill();
-}), 0.06, 0);
-layer(K.canvasTexture(TW, TH, (g, w, h) => {
-  g.strokeStyle = "#f3efe6";
-  g.lineWidth = 14;
-  g.strokeRect(7, 7, w - 14, h - 14);
-  g.lineWidth = 10;
-  g.beginPath();
-  g.moveTo(w / 2, 0); g.lineTo(w / 2, h);
-  g.moveTo(0, h * 0.42); g.lineTo(w, h * 0.42);
-  g.stroke();
-}), 0.07);
+  return { stick, glow, light, ph: rand() * 10 };
+}
+function setFlare(f, t, lit) {
+  const fl = 0.75 + 0.25 * Math.sin(t * 23 + f.ph) * Math.sin(t * 7.3 + f.ph * 2);
+  f.glow.material.opacity = lit * fl;
+  // kurzer Zündblitz: beim Aufflammen größer
+  f.glow.scale.setScalar(0.95 + (lit > 0 && lit < 1 ? 1.2 * Math.sin(Math.PI * lit) : 0));
+  f.stick.material.color.set(lit > 0 ? "#ff4a32" : "#5a1a14");
+  if (f.light) f.light.intensity = 22 * fl * lit;
+}
+const place = (ch, x, z, yaw) => { ch.root.position.set(x, 0.05, z); ch.root.rotation.y = yaw; };
+
+// Passanten in der Dämmerung
+const bystanders = Array.from({ length: 16 }, () => {
+  const ch = spawn(civilian());
+  const x = (rand() < 0.5 ? -1 : 1) * (5.6 + rand() * 1.6);
+  return { ch, x, z0: -10 + rand() * 75, dir: rand() < 0.5 ? -1 : 1, sp: 1.0 + rand() * 0.5, ph: rand() * 10 };
+});
+// Alle rennen nach Hause
+const homeRunners = Array.from({ length: 11 }, (_, i) => {
+  const ch = spawn(civilian());
+  const side = i % 2 ? 1 : -1;
+  const dz = NORTH_DOORS[i % NORTH_DOORS.length];
+  const start = [side * (5.4 + rand() * 1.6), dz + (rand() < 0.5 ? -1 : 1) * (2 + rand() * 6)];
+  return { ch, path: [start, [side * 7.0, dz], [side * 8.7, dz]], sp: 3.6 + rand() * 0.9, t0: 8.9 + rand() * 0.3 };
+});
+// Die Ersten kommen raus: Gruppe A
+const PA = [[-30, -120.6], [-2.2, -120.6], [-2.2, -40]];
+const groupA = [[0, 0], [-1.3, 1.6], [1.2, 1.9], [-0.4, 3.2], [1.8, 3.6], [-1.9, 4.4], [0.6, 5.2]].map(([lat, back], i) => {
+  const ch = spawn(purger());
+  return { ch, lat, back, flare: addFlare(ch, i % 2 === 0), ph: rand() * 10 };
+});
+const leaderS = (t) => (t - 16.3) * 1.9;
+function memberPos(m, t) {
+  const s = leaderS(t) - m.back;
+  const p = K.pathAt(PA, s);
+  return { x: p.x + Math.cos(p.yaw) * m.lat, z: p.z - Math.sin(p.yaw) * m.lat, yaw: p.yaw, s };
+}
+// Plünderer am Supermarkt (einer mit Schläger)
+const looters = [[12, -128], [13.2, -137], [10.8, -141]].map(([x, z], i) => {
+  const ch = spawn(purger());
+  place(ch, x, z, Math.PI / 2);
+  let flare = null;
+  if (i === 1) flare = addFlare(ch);
+  if (i === 0) {
+    const bat = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.75, 0.05), K.lambert("#8a6a44"));
+    bat.position.set(0, -0.3, 0.02);
+    ch.arms[1].hand.add(bat);
+  }
+  return { ch, flare, ph: rand() * 10 };
+});
+// Läufer und Gruppe B in der Seitenstraße
+const runner = spawn(civilian({ shirt: "#ecf0f1", pants: "#3b5a8a", hairStyle: "short", hair: "#2b1d14" }));
+const PR = [[61.0, -64], [61.4, -56], [61.6, -53.2], [63.4, -53.0]];
+const PB = [[60.5, -112], [60.5, -60]];
+const groupB = [[0, 0], [-1.4, 1.5], [1.3, 2.1]].map(([lat, back]) => {
+  const ch = spawn(purger());
+  return { ch, lat, back, flare: addFlare(ch), ph: rand() * 10 };
+});
+// Maske in Nahaufnahme
+const hero = spawn(purger({ shirt: "#1d1b22", hoodColor: "#1d1b22" }));
+place(hero, 9.0, -128, -Math.PI / 2);
+const heroFlare = addFlare(hero, true);
+// Der Klopfer und der Nachbar (gleiche olivgrüne Jacke)
+const OLIVE = "#556b2f";
+const knocker = spawn(purger({ shirt: OLIVE, hoodColor: OLIVE, pants: "#2c2a28" }));
+place(knocker, 8.35, -40, Math.PI / 2);
+const neighbor = spawn({ shirt: OLIVE, pants: "#2c2a28", hair: "#5a4632", hairStyle: "short", skin: "#e5bd98" });
+place(neighbor, -8.3, -40, Math.PI / 2);
+const heldMask = new THREE.Group();
+K.makePurgeMask(heldMask);
+heldMask.position.set(-0.2, 0.92, 0.34);
+heldMask.rotation.set(0.35, 0.25, 0.15);
+neighbor.root.add(heldMask);
+// Morgens kommen alle raus
+const morningFolks = [[-1, -52], [-1, -64], [-1, -76], [-1, -88], [-1, -52], [-1, -76]].map(([side, z], i) => {
+  const ch = spawn(civilian());
+  return { ch, side, path: [[side * 8.6, z], [side * 6.6, z + (rand() - 0.5) * 2]], t0: C.shuttersUp + 0.3 + i * 0.35, ph: rand() * 10 };
+});
+// Licht über deiner Haustür
+const porchBulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), new THREE.MeshBasicMaterial({ color: "#ffe2a8" }));
+porchBulb.position.set(8.85, 2.55, -40);
+scene.add(porchBulb);
+const porchGlow = K.makeGlow("#ffc77a", 1.1);
+porchGlow.position.copy(porchBulb.position);
+scene.add(porchGlow);
+const porchLight = new THREE.PointLight("#ffc77a", 0, 9, 1.6);
+porchLight.position.set(8.4, 2.4, -40);
+scene.add(porchLight);
 
 // ---------- Kamera ----------
+const runnerAt = (t) => K.pathAt(PR, (t - C.runner) * 5.2);
 const rig = new K.CameraRig([
-  { t0: 0, t1: 3.3, from: { pos: [60, 70, 130], tgt: [-20, 0, -40] }, to: { pos: [22, 30, 76], tgt: [-15, 3, 33] }, lift: 4 },
-  { t0: 3.7, t1: 6.25, from: { pos: [10, 9.5, 54], tgt: [-15, 3.2, 33] }, to: { pos: [6, 8, 48], tgt: [-16, 3.6, 32.5] }, lift: 3 },
-  { t0: 6.6, t1: 8.65, from: { pos: [21, 2.2, 24], tgt: [7, 12, 8] }, to: { pos: [19, 2.6, 21], tgt: [7, 13.5, 8] }, fov: 60 },
-  { t0: 8.75, t1: 11.95, from: { pos: [0, 26, 2], tgt: [0, 2, -70] }, to: { pos: [-2.5, 4.2, -33], tgt: [11, 2.4, -50] } },
-  { t0: 12.05, t1: 14.62, from: { pos: [2.6, 1.9, -76], tgt: [0, 1.7, -108] }, to: { pos: [2.2, 1.85, -79], tgt: [0, 1.7, -110] } },
+  { t0: 0, t1: 3.55, from: { pos: [60, 70, 130], tgt: [-20, 0, -40] }, to: { pos: [22, 30, 76], tgt: [-15, 3, 33] }, lift: 4 },
+  { t0: 3.9, t1: 6.65, from: { pos: [10, 9.5, 54], tgt: [-15, 3.2, 33] }, to: { pos: [6, 8, 48], tgt: [-16, 3.6, 32.5] }, lift: 3 },
+  { t0: 6.95, t1: 9.3, from: { pos: [21, 2.2, 24], tgt: [7, 12, 8] }, to: { pos: [19, 2.6, 21], tgt: [7, 13.5, 8] }, fov: 60 },
+  { t0: 9.35, t1: 10.48, from: { pos: [0.5, 3.4, 42], tgt: [2, 1.3, 68] }, to: { pos: [0.8, 3.2, 45], tgt: [2, 1.3, 70] } },
+  { t0: 10.5, t1: 12.65, from: { pos: [-2.5, 4.4, -30], tgt: [11, 2.4, -46] }, to: { pos: [-2.5, 4.0, -40], tgt: [11, 2.4, -56] } },
+  { t0: 12.8, t1: 14.45, from: { pos: [-70, 120, 50], tgt: [0, 0, -60] }, to: { pos: [-62, 112, 38], tgt: [0, 0, -62] } },
+  { t0: 14.5, t1: 17.25, from: { pos: [4, 3.0, -52], tgt: [-9, 2.6, -60] }, to: { pos: [4, 3.0, -70], tgt: [-9, 2.6, -78] } },
+  { t0: 17.3, t1: 19.2, from: { pos: [-7, 1.8, -117.5], tgt: [-27, 1.5, -121.5] }, to: { pos: [-7.2, 1.75, -117.8], tgt: [-23, 1.5, -121.2] } },
   {
-    t0: 14.7, t1: 17.3,
+    t0: 19.25, t1: 21.15,
+    fn: (t) => {
+      const p = K.pathAt(PA, leaderS(t));
+      return { pos: [p.x + 3.1, 1.55, p.z + 0.9], tgt: [p.x, 1.62, p.z], fov: 46 };
+    },
+  },
+  {
+    t0: 21.2, t1: 24.45,
     fn: (t, u) => {
       const e = K.easeInOutSine(u);
       const pan = K.ramp(t, C.panToMarket, C.panToMarket + 0.55);
@@ -413,21 +536,43 @@ const rig = new K.CameraRig([
       };
     },
   },
-  { t0: 17.38, t1: 19.33, from: { pos: [3, 2.4, -72], tgt: [0, 1.6, -95] }, to: { pos: [5, 15, -60], tgt: [0, 0.5, -98] } },
-  { t0: 19.4, t1: 22.45, from: { pos: [7.5, 3.2, -37.9], tgt: [-9, 2.6, -37.84] }, to: { pos: [0.5, 2.95, -37.88], tgt: [-9, 2.75, -37.84] }, fov: 50 },
-  { t0: 22.5, t1: 24.55, from: { pos: [4, 24, -48], tgt: [0, 0, -75] }, to: { pos: [40, 80, 40], tgt: [-5, 0, -50] } },
-  { t0: 24.55, t1: 30, from: { pos: [40, 80, 40], tgt: [-5, 0, -50] }, to: { pos: [52, 88, 58], tgt: [-8, 0, -46] } },
+  { t0: 24.5, t1: 26.85, from: { pos: [6, 18, -30], tgt: [0, 0, -85] }, to: { pos: [7, 24, -36], tgt: [0, 0, -88] } },
+  {
+    t0: 26.9, t1: 30.1,
+    fn: (t, u) => {
+      const r = runnerAt(t);
+      const hide = K.ramp(t, C.hide - 0.2, C.hide + 0.4);
+      return {
+        pos: [K.lerp(58.5, 58.8, u), 1.5, K.lerp(-46, -47, u)],
+        tgt: [K.lerp(r.x, 63.4, hide), K.lerp(1.15, 0.85, hide), K.lerp(r.z, -55.5, hide)],
+        fov: 50,
+      };
+    },
+  },
+  { t0: 30.15, t1: 32.8, from: { pos: [7.0, 1.82, -127.5], tgt: [9.0, 1.82, -128] }, to: { pos: [7.3, 1.84, -127.85], tgt: [9.0, 1.84, -128] }, fov: 44 },
+  { t0: 32.85, t1: 36.4, from: { pos: [7.5, 3.2, -37.9], tgt: [-9, 2.6, -37.84] }, to: { pos: [0.5, 2.95, -37.88], tgt: [-9, 2.75, -37.84] }, fov: 50 },
+  { t0: 36.45, t1: 40.7, from: { pos: [2.0, 1.75, -34.5], tgt: [9, 1.5, -40] }, to: { pos: [3.3, 1.7, -36.0], tgt: [9, 1.5, -40] }, fov: 50 },
+  { t0: 40.75, t1: 41.95, from: { pos: [7.0, 1.55, -42.4], tgt: [8.9, 1.65, -40.3] }, to: { pos: [7.1, 1.56, -42.2], tgt: [8.9, 1.65, -40.3] }, fov: 50 },
+  { t0: 42.0, t1: 46.25, from: { pos: [9.15, 1.66, -40], tgt: [5, 1.75, -40] }, to: { pos: [9.15, 1.64, -40.04], tgt: [5, 1.75, -40.02] }, fov: 100 },
+  { t0: 46.3, t1: 48.15, from: { pos: [21, 2.2, 24], tgt: [7, 12, 8] }, to: { pos: [20, 2.5, 22], tgt: [7, 13, 8] }, fov: 60 },
+  { t0: 48.2, t1: 51.7, from: { pos: [4.5, 2.0, -44], tgt: [-9, 1.7, -68] }, to: { pos: [4.2, 2.1, -48], tgt: [-9, 1.7, -72] }, fov: 50 },
+  {
+    t0: 51.75, t1: 55.05,
+    fn: (t, u) => ({ pos: [8.3, 1.68, -40], tgt: [-8.3, 1.45, -40], fov: K.lerp(40, 15, K.easeInOutSine(u)) }),
+  },
+  { t0: 55.1, t1: 60, from: { pos: [40, 80, 40], tgt: [-5, 0, -50] }, to: { pos: [52, 88, 58], tgt: [-8, 0, -46] } },
 ]);
 
 // ---------- Pro-Frame-Update ----------
-const sirenActive = (t) => (t >= C.sirenOn && t < C.sirenOn + 3.4) || (t >= C.sirenEndOn && t < C.sirenEndOff);
+const sirenActive = (t) => between(t, C.sirenOn, C.sirenOn + 3.4) || between(t, C.sirenEndOn, C.sirenEndOff);
 const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e3 = new THREE.Euler(), v3 = new THREE.Vector3(), s3 = new THREE.Vector3();
-const night = (t) => K.ramp(t, C.sirenOn, C.sirenOn + 1.4) * (1 - K.ramp(t, C.dawnStart, C.dawnStart + 1.6));
+const night = (t) => K.ramp(t, C.sirenOn, C.sirenOn + 1.4) * (1 - K.ramp(t, C.dawnStart - 0.05, C.dawnStart));
+const STRIDE = 2.6; // Schrittphase pro Meter beim Gehen; Rennen nutzt 1.6
 
 function updateWorld(t) {
   const n = night(t);
 
-  // Polizei: Blaulicht blinkt, bis die Wache "außer Dienst" geht
+  // Polizei
   const policeOn = t < C.policeOff;
   policeLights.forEach((l) => {
     const flash = policeOn && Math.floor(t * 7 + l.side) % 2 === 0 ? 1 : 0;
@@ -452,13 +597,33 @@ function updateWorld(t) {
   });
 
   // Fenster & Rollläden
+  const peeking = between(t, C.peekStart, C.peekEnd);
   field.update(t, (w, tt) => {
+    const down = K.ramp(tt, w.tOff, w.tOff + 0.35);
+    const up = K.ramp(tt, w.tUp, w.tUp + 0.45);
     if (w.neighbor) return { light: 0, shutter: 0 };
-    const sh = K.ramp(tt, w.tOff, w.tOff + 0.35);
-    return { light: w.litDusk ? 1 : 0.15, shutter: sh };
+    if (w.peek && peeking) return { light: 0, shutter: 0.55 };
+    return { light: tt < C.shuttersUp ? (w.litDusk ? 1 : 0.15) : 0.12, shutter: down * (1 - up) };
   });
+  const nOn = t < C.threeAm - 0.3 ? 1 : 0;
+  neighborArt.room.opacity = nOn;
+  neighborArt.frame.opacity = nOn;
+  neighborArt.sil.opacity = nOn * K.ramp(t, C.neighbor - 0.25, C.neighbor + 0.6);
+  peekArts.forEach((a, i) => {
+    const o = peeking ? 1 : 0;
+    a.room.opacity = o;
+    a.frame.opacity = o;
+    a.sil.opacity = o * K.ramp(t, C.peekStart + 0.3 + i * 0.5, C.peekStart + 0.8 + i * 0.5);
+  });
+  if (yourDoorIdx >= 0) { // Türblatt ausblenden, solange wir durch den Spion schauen
+    const d = field.doors[yourDoorIdx];
+    const hidden = between(t, C.peep - 0.02, C.dawnStart);
+    m4.compose(v3.set(d.x, 0, d.z), q.setFromEuler(e3.set(0, d.rotY, 0)), s3.setScalar(hidden ? 0.0001 : 1));
+    field.doorMesh.setMatrixAt(yourDoorIdx, m4);
+    field.doorMesh.instanceMatrix.needsUpdate = true;
+  }
 
-  // Ampeln: erst grün, nach der Sirene nur noch gelbes Blinken
+  // Ampel
   const chaos = t > C.sirenOn + 0.5;
   trafficLights.forEach((tl) => {
     const blink = chaos && Math.floor(t * 1.8) % 2 === 0 ? 1 : 0;
@@ -468,8 +633,8 @@ function updateWorld(t) {
     set(tl.g, chaos ? 0 : 1);
   });
 
-  // Laternen: an ab Dämmerung, flackern in der Nacht, aus im Morgengrauen
-  const lampOn = K.ramp(t, 4.5, 6.0) * (1 - K.ramp(t, C.dawnStart + 0.6, C.dawnStart + 1.8));
+  // Laternen
+  const lampOn = K.ramp(t, 4.5, 6.0) * (1 - K.ramp(t, C.dawnStart, C.dawnStart + 0.1));
   lamps.forEach((l) => {
     let f = lampOn;
     if (l.flick && n > 0.5) f *= Math.sin(t * 31 + l.ph) * Math.sin(t * 13 + l.ph) > 0.15 ? 1 : 0.1;
@@ -497,53 +662,124 @@ function updateWorld(t) {
     });
     shards.instanceMatrix.needsUpdate = true;
   }
-  interiorMat.color.setScalar(broken ? 0.55 + 0.45 * (Math.sin(t * 40) > -0.6 ? 1 : 0.3) : 1);
+  interiorMat.color.setScalar(broken && t < C.dawnStart ? 0.55 + 0.45 * (Math.sin(t * 40) > -0.6 ? 1 : 0.3) : 1);
 
-  // Passanten in der Dämmerung
+  // Brennende Autos
+  fireCars.forEach((fc) => {
+    const ign = t >= fc.tIgn;
+    fc.normal.visible = !ign;
+    fc.burnt.visible = ign;
+    fc.fire.update(t, K.ramp(t, fc.tIgn, fc.tIgn + 0.6) * (t < C.dawnStart ? 1 : 0));
+    fc.smoke.update(t, K.ramp(t, fc.tIgn + 0.3, fc.tIgn + 2));
+  });
+
+  // Passanten (Dämmerung)
   bystanders.forEach((b) => {
-    b.p.visible = t < 8.65;
-    b.p.position.set(b.x, 0.1 + Math.abs(Math.sin(t * 6 + b.ph)) * 0.05, b.z0 + b.dir * b.sp * t);
-    b.p.rotation.y = b.dir > 0 ? 0 : Math.PI;
+    b.ch.root.visible = t < C.runHome;
+    if (!b.ch.root.visible) return;
+    place(b.ch, b.x, b.z0 + b.dir * b.sp * t, b.dir > 0 ? 0 : Math.PI);
+    K.animateCharacter(b.ch, { gait: "walk", phase: b.sp * t * STRIDE + b.ph, t, headYaw: Math.sin(t * 0.7 + b.ph) * 0.3 });
   });
-
-  // Maskierte
-  const zBase = -106 + (t - C.purgersIn) * 2.1;
-  purgers.forEach((pg) => {
-    pg.p.visible = t >= C.purgersIn && t < C.dawnStart;
-    pg.p.position.set(pg.ox + Math.sin(t * 1.3 + pg.ph) * 0.25, 0.1 + Math.abs(Math.sin(t * 5.5 + pg.ph)) * 0.07, zBase + pg.oz);
-    const fl = 0.75 + 0.25 * Math.sin(t * 23 + pg.ph) * Math.sin(t * 7.3 + pg.ph * 2);
-    pg.glow.material.opacity = fl;
-    if (pg.light) pg.light.intensity = 26 * fl;
+  // Alle rennen nach Hause
+  homeRunners.forEach((r) => {
+    const s = Math.max(0, (t - r.t0) * r.sp);
+    const p = K.pathAt(r.path, s);
+    r.ch.root.visible = between(t, C.runHome - 0.05, C.shutterStart) && !p.done;
+    if (!r.ch.root.visible) return;
+    place(r.ch, p.x, p.z, p.yaw);
+    K.animateCharacter(r.ch, { gait: "run", phase: s * 1.6, t });
   });
-  looters.forEach((l) => {
-    l.p.visible = t >= 14.3 && t < C.dawnStart;
-    l.p.position.y = 0.1 + Math.abs(Math.sin(t * 3 + l.ph)) * 0.04;
+  // Gruppe A
+  groupA.forEach((m, i) => {
+    m.ch.root.visible = between(t, C.halfEight - 0.05, 30.1);
+    if (!m.ch.root.visible) return;
+    const p = memberPos(m, t);
+    place(m.ch, p.x, p.z, p.yaw);
+    const lit = K.ramp(t, C.flares + i * 0.07, C.flares + i * 0.07 + 0.15);
+    setFlare(m.flare, t, lit);
+    K.animateCharacter(m.ch, { gait: "walk", phase: Math.max(0, p.s) * STRIDE, t, arm: lit > 0 ? "flare" : "swing", headYaw: Math.sin(t * 0.9 + m.ph) * 0.35 });
   });
-
-  // Brennendes Auto
-  const fireOn = t >= C.purgersIn && t < C.dawnStart + 0.8 ? 1 : 0;
-  fire.forEach((f, i) => {
-    const fl = 0.6 + 0.4 * Math.sin(t * (17 + i) + f.ph);
-    f.s.position.set(-1.2 + f.ox, 1.8 + ((t * 1.7 + f.ph) % 1.6), -104 + f.oz);
-    f.s.scale.setScalar((1.6 + fl * 1.6) * fireOn);
-    f.s.material.opacity = fl * fireOn;
+  // Plünderer
+  looters.forEach((l, i) => {
+    l.ch.root.visible = between(t, 21.1, 30.1);
+    if (!l.ch.root.visible) return;
+    const swing = i === 0 && between(t, C.glass - 0.75, C.glass + 0.1);
+    K.animateCharacter(l.ch, { t, arm: swing ? "knock" : l.flare ? "flare" : undefined, armT: t - C.glass, headYaw: Math.sin(t * 1.1 + l.ph) * 0.3 });
+    if (l.flare) setFlare(l.flare, t, 1);
   });
-  fireLight.intensity = fireOn * (55 + 20 * Math.sin(t * 19));
-
-  // Nachbar
-  silMat.opacity = K.ramp(t, C.neighbor - 0.25, C.neighbor + 0.6);
+  // Läufer + Gruppe B
+  runnerLight.intensity = between(t, C.runner - 0.05, 30.15) ? 38 : 0;
+  runner.root.visible = between(t, C.runner - 0.05, 30.15);
+  if (runner.root.visible) {
+    const r = runnerAt(t);
+    const crouch = K.ramp(t, C.hide - 0.25, C.hide + 0.15);
+    place(runner, r.x, r.z, r.done ? Math.PI : r.yaw); // duckt sich, Blick zurück zu den Maskierten
+    K.animateCharacter(runner, { gait: crouch > 0.5 ? "idle" : "run", phase: (t - C.runner) * 5.2 * 1.6, t, crouch, headYaw: crouch * -0.6 });
+  }
+  groupB.forEach((m) => {
+    m.ch.root.visible = between(t, C.runner - 0.05, 30.15);
+    if (!m.ch.root.visible) return;
+    const s = (t - 25) * 1.6 - m.back;
+    const p = K.pathAt(PB, s);
+    place(m.ch, p.x + m.lat, p.z, p.yaw);
+    setFlare(m.flare, t, 1);
+    K.animateCharacter(m.ch, { gait: "walk", phase: s * STRIDE, t, arm: "flare" });
+  });
+  // Maske in Nahaufnahme: Kopf dreht sich zur Kamera
+  hero.root.visible = between(t, 30.1, 32.85);
+  if (hero.root.visible) {
+    const turn = K.easeInOutCubic(K.clamp((t - C.maskTurn) / 0.8));
+    setFlare(heroFlare, t, 1);
+    K.animateCharacter(hero, { t, arm: "flare", headYaw: K.lerp(1.15, 0, turn), headPitch: K.lerp(0, -0.06, turn), headRoll: turn * 0.1 });
+  }
+  // Klopfer
+  knocker.root.visible = between(t, C.threeAm - 0.1, C.dawnStart - 0.02);
+  if (knocker.root.visible) {
+    let arm;
+    if (between(t, C.knock1 - 0.28, C.knock3 + 0.12)) arm = "knock";
+    else if (between(t, C.knock1 - 0.6, C.knock1 - 0.28) || between(t, C.knock3 + 0.12, 41.95)) arm = "knockHold";
+    const tilt = K.ramp(t, C.tilt, C.tilt + 0.7);
+    K.animateCharacter(knocker, { t, arm, armT: t - C.knock1, headRoll: tilt * 0.38, headPitch: -0.05 });
+  }
+  const porch = between(t, C.threeAm - 0.1, C.dawnStart) ? (Math.sin(t * 17) * Math.sin(t * 5.3) > -0.55 ? 1 : 0.25) : 0;
+  porchBulb.material.color.set("#ffe2a8").multiplyScalar(0.25 + 0.75 * porch);
+  porchGlow.material.opacity = porch * 0.6;
+  porchLight.intensity = 2.6 * porch;
+  // Morgen
+  morningFolks.forEach((f) => {
+    f.ch.root.visible = t >= f.t0;
+    if (!f.ch.root.visible) return;
+    const s = (t - f.t0) * 1.25;
+    const p = K.pathAt(f.path, s);
+    const faceStreet = (f.side < 0 ? Math.PI / 2 : -Math.PI / 2) + Math.sin(t * 0.5 + f.ph) * 0.4;
+    place(f.ch, p.x, p.z, p.done ? faceStreet : p.yaw);
+    K.animateCharacter(f.ch, { gait: p.done ? "idle" : "walk", phase: s * STRIDE, t, headYaw: p.done ? Math.sin(t * 0.8 + f.ph) * 0.6 : 0 });
+  });
+  neighbor.root.visible = t >= 51.7;
+  if (neighbor.root.visible) {
+    K.animateCharacter(neighbor, { t, armL: "holdLow", arm: t >= C.reveal ? "wave" : undefined, armT: t - C.reveal, headRoll: 0.05 });
+  }
 }
 
+const CLOCK = [[0, 0], [C.sirenOn, 0], [C.halfEight, 0.5], [C.midnight, 5], [C.threeAm, 8], [C.sevenAm, 12]];
+function hoursAt(t) {
+  if (t <= CLOCK[0][0]) return 0;
+  for (let i = 0; i < CLOCK.length - 1; i++) {
+    const [t0, h0] = CLOCK[i], [t1, h1] = CLOCK[i + 1];
+    if (t <= t1) return K.lerp(h0, h1, (t - t0) / (t1 - t0));
+  }
+  return 12;
+}
 function updateHud(t) {
-  const u = K.clamp((t - C.purgeStart) / (C.purgeEnd - C.purgeStart));
-  hudNum.textContent = K.formatDE(Math.pow(u, 2.1) * 1284551);
-  hudSub.textContent = `NOCH ${K.formatClock(12 * 3600 * (1 - u))} STUNDEN`;
+  const h = hoursAt(t);
+  hudNum.textContent = K.formatDE(Math.pow(h / 12, 1.7) * 1284551);
+  hudSub.textContent = `NOCH ${K.formatClock((12 - h) * 3600)} STUNDEN`;
 }
 
 function renderAt(t) {
   const focus = rig.apply(camera, t);
   sky.mesh.position.copy(camera.position);
-  K.applyMood(K.moodAt(MOOD, t), { scene, sky, lights, focus });
+  K.applyMood(K.moodAt(MOOD, t), { scene, sky, lights, focus, camera });
   updateWorld(t);
   renderer.render(scene, camera);
   updateHud(t);
@@ -553,15 +789,10 @@ window.__hf = window.__hf || {};
 window.__hf.buildReady = window.__hf.buildReady || {};
 window.__hf.buildReady.world = (async () => {
   await document.fonts.load("700 150px Inter");
-  const signTex = K.textTexture({ text: "POLIZEI", bg: "#1f4fbf", fg: "#ffffff" });
-  policeSignMat.map = signTex;
+  policeSignMat.map = K.textTexture({ text: "POLIZEI", bg: "#1f4fbf", fg: "#ffffff" });
   policeSignMat.needsUpdate = true;
-  scene.traverse((o) => {
-    if (o.userData.sign) {
-      o.material.map = K.textTexture({ text: "SUPERMARKT", bg: "#1f4d3a", fg: "#ffffff", spacing: "10px", font: "700 130px Inter" });
-      o.material.needsUpdate = true;
-    }
-  });
+  marketSign.material.map = K.textTexture({ text: "SUPERMARKT", bg: "#1f4d3a", fg: "#ffffff", spacing: "10px", font: "700 130px Inter" });
+  marketSign.material.needsUpdate = true;
   renderAt(window.__hfThreeTime || 0);
 })();
 

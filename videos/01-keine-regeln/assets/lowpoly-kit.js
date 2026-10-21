@@ -130,7 +130,7 @@ export function moodAt(keys, t) {
   return out;
 }
 
-export function applyMood(m, { scene, sky, lights, focus }) {
+export function applyMood(m, { scene, sky, lights, focus, camera }) {
   sky.uniforms.top.value.copy(m.top);
   sky.uniforms.horizon.value.copy(m.horizon);
   sky.uniforms.bottom.value.copy(m.bottom);
@@ -148,6 +148,15 @@ export function applyMood(m, { scene, sky, lights, focus }) {
   const dir = new THREE.Vector3(...m.sunDir).normalize();
   lights.sun.position.copy(focus).addScaledVector(dir, 120);
   lights.sun.target.position.copy(focus);
+  // Schatten-Ausschnitt an den Kameraabstand koppeln: Nahaufnahmen bekommen scharfe Schatten
+  if (camera) {
+    const size = clamp(camera.position.distanceTo(focus) * 1.3, 6, 60);
+    const sc = lights.sun.shadow.camera;
+    if (Math.abs(sc.right - size) > 0.01) {
+      sc.left = -size; sc.right = size; sc.top = size; sc.bottom = -size;
+      sc.updateProjectionMatrix();
+    }
+  }
 }
 
 // ---------- Texturen ----------
@@ -327,27 +336,306 @@ export function addTrees(scene, spots, { crown = "#3f8a3a", trunk = "#7a5236" } 
 const geoCache = {};
 function geo(key, make) { return (geoCache[key] ||= make()); }
 
-export function makePerson({ body = "#3a3f4b", skin = "#e9c3a0", mask = false, scale = 1 } = {}) {
-  const g = new THREE.Group();
-  const b = new THREE.Mesh(geo("body", () => new THREE.CapsuleGeometry(0.3, 0.9, 3, 8)), lambert(body));
-  b.position.y = 0.78;
-  const h = new THREE.Mesh(geo("head", () => new THREE.SphereGeometry(0.26, 12, 10)), mask ? basic("#f2eee4") : lambert(skin));
-  h.position.y = 1.6;
-  b.castShadow = h.castShadow = true;
-  g.add(b, h);
-  if (mask) {
-    const eyeGeo = geo("eye", () => new THREE.SphereGeometry(0.045, 6, 6));
-    for (const sx of [-0.09, 0.09]) {
-      const e = new THREE.Mesh(eyeGeo, basic("#111111"));
-      e.position.set(sx, 1.64, 0.235);
-      g.add(e);
-    }
-    const mouth = new THREE.Mesh(geo("mouth", () => new THREE.BoxGeometry(0.12, 0.018, 0.02)), basic("#111111"));
-    mouth.position.set(0, 1.5, 0.245);
-    g.add(mouth);
-  }
-  g.scale.setScalar(scale);
+// ---------- Menschen (Low-Poly mit Gelenken) ----------
+// Figur schaut in lokale +z-Richtung, Füße bei y = 0, ca. 1,78 m groß.
+// opts: shirt, pants, skin, hair, shoes, hairStyle ("short"|"long"|"bald"|"cap"),
+//       sleeves ("long"|"short"), mask (Purge-Maske), hood, scale, castShadow
+const limb = (key, rTop, rBot, len) => geo(key, () => {
+  const g = new THREE.CylinderGeometry(rTop, rBot, len, 7);
+  g.translate(0, -len / 2, 0);
   return g;
+});
+
+export function makeCharacter(opts = {}) {
+  const o = {
+    shirt: "#3d6fb6", pants: "#2c3440", skin: "#e5bd98", hair: "#3b2a20", shoes: "#1d1d1f",
+    hairStyle: "short", sleeves: "long", mask: false, hood: false, scale: 1, castShadow: true, ...opts,
+  };
+  const root = new THREE.Group();
+  const body = new THREE.Group(); // für Wippen beim Gehen
+  root.add(body);
+  const skinMat = lambert(o.skin, { emissive: new THREE.Color(o.skin).multiplyScalar(0.22).getHex() });
+  const mesh = (g, color, parent, basicMat = false) => {
+    const m = new THREE.Mesh(g, basicMat ? basic(color) : color === o.skin ? skinMat : lambert(color));
+    m.castShadow = o.castShadow;
+    parent.add(m);
+    return m;
+  };
+
+  // Becken + Beine (Oberschenkel -> Knie -> Unterschenkel -> Schuh)
+  const pelvis = mesh(geo("pelvis", () => new THREE.BoxGeometry(0.3, 0.16, 0.19)), o.pants, body);
+  pelvis.position.y = 0.93;
+  const legs = [-1, 1].map((side) => {
+    const hip = new THREE.Group();
+    hip.position.set(0.1 * side, 0.92, 0);
+    body.add(hip);
+    mesh(limb("thigh", 0.088, 0.072, 0.46), o.pants, hip);
+    const knee = new THREE.Group();
+    knee.position.y = -0.46;
+    hip.add(knee);
+    mesh(limb("shin", 0.07, 0.058, 0.41), o.pants, knee);
+    const shoe = mesh(geo("shoe", () => new THREE.BoxGeometry(0.11, 0.075, 0.25)), o.shoes, knee);
+    shoe.position.set(0, -0.43, 0.045);
+    return { hip, knee };
+  });
+
+  // Oberkörper (kippbar an der Taille)
+  const torso = new THREE.Group();
+  torso.position.y = 0.98;
+  body.add(torso);
+  const chest = mesh(geo("chest", () => {
+    const g = new THREE.CylinderGeometry(0.2, 0.155, 0.56, 8);
+    g.scale(1, 1, 0.68);
+    g.translate(0, 0.28, 0);
+    return g;
+  }), o.shirt, torso);
+  const shoulders = mesh(geo("shoulders", () => {
+    const g = new THREE.SphereGeometry(0.2, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+    g.scale(1, 0.42, 0.7);
+    return g;
+  }), o.shirt, torso);
+  shoulders.position.y = 0.55;
+  const neck = mesh(geo("neck", () => new THREE.CylinderGeometry(0.048, 0.055, 0.1, 7)), o.skin, torso);
+  neck.position.y = 0.6;
+
+  // Kopf
+  const head = new THREE.Group();
+  head.position.y = 0.64;
+  head.scale.setScalar(1.14); // leicht stilisiert: etwas größerer Kopf
+  torso.add(head);
+  const skull = mesh(geo("skull", () => {
+    const g = new THREE.SphereGeometry(0.115, 14, 12);
+    g.scale(0.95, 1.12, 1.0);
+    g.translate(0, 0.12, 0);
+    return g;
+  }), o.skin, head);
+  if (!o.mask) {
+    const eye = geo("eye2", () => new THREE.SphereGeometry(0.014, 6, 5));
+    for (const sx of [-0.04, 0.04]) {
+      const e = new THREE.Mesh(eye, basic("#1b1410"));
+      e.position.set(sx, 0.135, 0.105);
+      head.add(e);
+    }
+    const nose = mesh(geo("nose", () => new THREE.ConeGeometry(0.016, 0.04, 5)), o.skin, head);
+    nose.rotation.x = Math.PI / 2;
+    nose.position.set(0, 0.105, 0.118);
+    const mouth = new THREE.Mesh(geo("mouth2", () => new THREE.BoxGeometry(0.04, 0.008, 0.01)), basic("#6b3a2e"));
+    mouth.position.set(0, 0.068, 0.11);
+    head.add(mouth);
+  }
+  if (o.hairStyle !== "bald" && !o.hood) {
+    const cap = mesh(geo("hairCap", () => {
+      const g = new THREE.SphereGeometry(0.122, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.52);
+      g.scale(0.98, 1.08, 1.06);
+      g.translate(0, 0.135, -0.01);
+      return g;
+    }), o.hairStyle === "cap" ? o.capColor || "#b83a2e" : o.hair, head);
+    if (o.hairStyle === "long") {
+      const back = mesh(geo("hairBack", () => new THREE.BoxGeometry(0.2, 0.2, 0.07)), o.hair, head);
+      back.position.set(0, 0.095, -0.075);
+    }
+    if (o.hairStyle === "cap") {
+      const brim = mesh(geo("brim", () => new THREE.BoxGeometry(0.2, 0.02, 0.11)), o.capColor || "#b83a2e", head);
+      brim.position.set(0, 0.2, 0.12);
+    }
+  }
+  let maskGroup = null;
+  if (o.mask) maskGroup = makePurgeMask(head);
+  if (o.hood) {
+    const hood = mesh(geo("hood", () => {
+      const g = new THREE.SphereGeometry(0.155, 14, 10, Math.PI / 2 + 0.95, Math.PI * 2 - 1.9, 0, Math.PI * 0.78);
+      g.scale(1, 1.1, 1.05);
+      g.translate(0, 0.12, -0.015);
+      return g;
+    }), o.hoodColor || o.shirt, head);
+    hood.material = lambert(o.hoodColor || o.shirt, { side: THREE.DoubleSide });
+  }
+
+  // Arme (Schulter -> Ellbogen -> Unterarm -> Hand)
+  const arms = [-1, 1].map((side) => {
+    const sh = new THREE.Group();
+    sh.position.set(0.215 * side, 0.52, 0);
+    torso.add(sh);
+    mesh(limb("upperArm", 0.056, 0.048, 0.3), o.shirt, sh);
+    const elbow = new THREE.Group();
+    elbow.position.y = -0.3;
+    sh.add(elbow);
+    mesh(limb("foreArm", 0.047, 0.04, 0.26), o.sleeves === "short" ? o.skin : o.shirt, elbow);
+    const hand = new THREE.Group();
+    hand.position.y = -0.28;
+    elbow.add(hand);
+    mesh(geo("hand", () => new THREE.SphereGeometry(0.048, 8, 6)), o.skin, hand);
+    return { sh, elbow, hand };
+  });
+
+  root.scale.setScalar(o.scale);
+  return { root, body, torso, head, legs, arms, mask: maskGroup, opts: o, _skull: skull, _chest: chest };
+}
+
+// Weiße Purge-Maske mit dunklen Augen und starrem Grinsen
+export function makePurgeMask(parent) {
+  const g = new THREE.Group();
+  const face = new THREE.Mesh(geo("maskFace", () => {
+    const m = new THREE.SphereGeometry(0.125, 14, 12, Math.PI * 0.18, Math.PI * 0.64, Math.PI * 0.16, Math.PI * 0.62);
+    m.scale(0.98, 1.13, 1.05);
+    m.translate(0, 0.12, 0);
+    return m;
+  }), lambert("#f1ede4", { emissive: "#3c3832", side: THREE.DoubleSide }));
+  g.add(face);
+  const dark = basic("#0b0b0d");
+  for (const sx of [-0.045, 0.045]) {
+    const e = new THREE.Mesh(geo("maskEye", () => {
+      const m = new THREE.SphereGeometry(0.022, 8, 6);
+      m.scale(1.25, 0.8, 0.5);
+      return m;
+    }), dark);
+    e.position.set(sx, 0.145, 0.118);
+    e.rotation.z = sx > 0 ? -0.35 : 0.35;
+    g.add(e);
+  }
+  const smile = new THREE.Mesh(geo("maskSmile", () => new THREE.TorusGeometry(0.05, 0.006, 4, 16, Math.PI * 0.85)), dark);
+  smile.rotation.z = Math.PI + Math.PI * 0.075;
+  smile.position.set(0, 0.085, 0.122);
+  g.add(smile);
+  parent.add(g);
+  return g;
+}
+
+// Animation aus der Zeit:  animateCharacter(ch, { gait, phase, arm, armT, headYaw, headPitch, lean, crouch })
+//   gait: "idle" | "walk" | "run";  phase: Schrittphase in Radiant (z. B. strecke * 2.4)
+//   arm:  "swing" | "flare" | "knock" | "wave" | "holdLow"
+export function animateCharacter(ch, s = {}) {
+  const gait = s.gait || "idle";
+  const ph = s.phase || 0;
+  const P = gait === "run" ? { A: 0.95, K: 1.35, arm: 1.05, elbow: -1.45, bob: 0.07, lean: 0.24 }
+    : gait === "walk" ? { A: 0.45, K: 0.65, arm: 0.42, elbow: -0.28, bob: 0.03, lean: 0.04 }
+    : { A: 0, K: 0, arm: 0, elbow: -0.12, bob: 0, lean: 0 };
+  const sinP = Math.sin(ph), cosP = Math.cos(ph);
+  const [L, R] = ch.legs;
+  L.hip.rotation.x = -P.A * sinP;
+  R.hip.rotation.x = P.A * sinP;
+  L.knee.rotation.x = P.K * Math.max(0, cosP);
+  R.knee.rotation.x = P.K * Math.max(0, -cosP);
+  ch.body.position.y = P.bob * Math.abs(cosP);
+  const crouch = s.crouch || 0;
+  if (crouch) {
+    for (const leg of ch.legs) { leg.hip.rotation.x = -1.25 * crouch; leg.knee.rotation.x = 2.1 * crouch; }
+    ch.body.position.y = -0.42 * crouch;
+  }
+  ch.torso.rotation.x = (s.lean ?? P.lean) + crouch * 0.5;
+  const breathe = gait === "idle" ? Math.sin((s.t || 0) * 2.1) * 0.012 : 0;
+  ch.torso.scale.y = 1 + breathe;
+
+  const [AL, AR] = ch.arms;
+  AL.sh.rotation.set(P.arm * sinP, 0, -0.06);
+  AR.sh.rotation.set(-P.arm * sinP, 0, 0.06);
+  AL.elbow.rotation.set(P.elbow, 0, 0);
+  AR.elbow.rotation.set(P.elbow, 0, 0);
+  const at = s.armT || 0;
+  switch (s.arm) {
+    case "flare": // Fackel nach vorn-oben gestreckt
+      AR.sh.rotation.set(-1.05 + Math.sin((s.t || 0) * 1.7) * 0.05, 0, 0.12);
+      AR.elbow.rotation.set(-0.45, 0, 0);
+      break;
+    case "knock": { // at = Zeit relativ zum ersten Schlag; Arm gestreckt bei at = 0, 0.35, 0.7 …
+      const hit = 0.5 + 0.5 * Math.cos((at * 2 * Math.PI) / 0.35);
+      AR.sh.rotation.set(-1.25, 0, 0.1);
+      AR.elbow.rotation.set(-1.25 + hit * 0.65, 0, 0);
+      break;
+    }
+    case "knockHold":
+      AR.sh.rotation.set(-1.25, 0, 0.1);
+      AR.elbow.rotation.set(-1.25, 0, 0);
+      break;
+    case "wave": { // rechte Hand seitlich hoch und winken
+      const up = clamp(at / 0.45);
+      AR.sh.rotation.set(-0.3 * up, 0, 0.06 + 2.5 * smooth(up));
+      AR.elbow.rotation.set(0, 0, 0.35 * up + Math.sin(at * 9) * 0.35 * up);
+      break;
+    }
+    case "holdLow": // etwas locker in der Hand halten (z. B. die Maske)
+      AR.sh.rotation.set(-0.35, 0, 0.1);
+      AR.elbow.rotation.set(-0.9, 0, 0);
+      break;
+    default:
+      break;
+  }
+  if (s.armL === "holdLow") { // linke Hand hält etwas vor dem Bauch
+    AL.sh.rotation.set(-0.4, 0, -0.12);
+    AL.elbow.rotation.set(-1.0, 0, 0);
+  }
+  ch.head.rotation.set(s.headPitch || 0, s.headYaw || 0, s.headRoll || 0);
+}
+
+// Position + Blickrichtung entlang eines Polygonzugs [[x,z], ...] bei Strecke s
+export function pathAt(points, s) {
+  let rest = Math.max(0, s);
+  for (let i = 0; i < points.length - 1; i++) {
+    const [ax, az] = points[i], [bx, bz] = points[i + 1];
+    const len = Math.hypot(bx - ax, bz - az);
+    if (rest <= len || i === points.length - 2) {
+      const u = Math.min(1, rest / len);
+      return { x: ax + (bx - ax) * u, z: az + (bz - az) * u, yaw: Math.atan2(bx - ax, bz - az), done: rest >= len && i === points.length - 2 };
+    }
+    rest -= len;
+  }
+  const [x, z] = points[points.length - 1];
+  return { x, z, yaw: 0, done: true };
+}
+
+// ---------- Feuer & Rauch ----------
+export function makeFire(scene, pos, { size = 1, light = true, seed = 1 } = {}) {
+  const r = mulberry32(seed);
+  const flames = Array.from({ length: 14 }, (_, i) => {
+    const s = makeGlow(i % 3 === 0 ? "#ffe066" : i % 3 === 1 ? "#ff8a1a" : "#ff4a12", 2.4 * size);
+    scene.add(s);
+    return { s, ox: (r() - 0.5) * 1.8 * size, oz: (r() - 0.5) * 3 * size, ph: r() * 20 };
+  });
+  const pl = light ? new THREE.PointLight("#ff7a2a", 0, 30 * size, 1.4) : null;
+  if (pl) { pl.position.set(pos[0], pos[1] + 2.5, pos[2]); scene.add(pl); }
+  return {
+    update(t, amount) {
+      flames.forEach((f, i) => {
+        const fl = 0.6 + 0.4 * Math.sin(t * (17 + i) + f.ph);
+        f.s.position.set(pos[0] + f.ox, pos[1] + 1.6 * size + ((t * 1.7 + f.ph) % 1.6) * size, pos[2] + f.oz);
+        const k = (1.6 + fl * 1.6) * size * amount; // Flammen: schmal und hoch
+        f.s.scale.set(k * 0.62, k * 1.35, 1);
+        f.s.material.opacity = fl * amount;
+        f.s.visible = amount > 0.01;
+      });
+      if (pl) pl.intensity = amount * (55 + 20 * Math.sin(t * 19));
+    },
+  };
+}
+
+let smokeTex = null;
+export function makeSmoke(scene, pos, { count = 8, seed = 2, color = "#6d6a6a" } = {}) {
+  if (!smokeTex) {
+    smokeTex = canvasTexture(128, 128, (g) => {
+      const grd = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+      grd.addColorStop(0, "rgba(255,255,255,0.9)");
+      grd.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, 128, 128);
+    });
+  }
+  const r = mulberry32(seed);
+  const puffs = Array.from({ length: count }, () => {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: smokeTex, color, transparent: true, depthWrite: false, opacity: 0 }));
+    scene.add(s);
+    return { s, ph: r(), dx: (r() - 0.5) * 2 };
+  });
+  return {
+    update(t, amount) {
+      puffs.forEach((p) => {
+        const u = (t * 0.12 + p.ph) % 1;
+        p.s.position.set(pos[0] + p.dx + u * 3, pos[1] + 1 + u * 14, pos[2] + u * 1.5);
+        p.s.scale.setScalar(2 + u * 9);
+        p.s.material.opacity = amount * 0.42 * Math.sin(Math.PI * u);
+        p.s.visible = amount > 0.01;
+      });
+    },
+  };
 }
 
 // ---------- Kamera-Fahrten ----------

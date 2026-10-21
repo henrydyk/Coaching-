@@ -32,6 +32,8 @@
       #vignette { position: absolute; inset: 0; opacity: 0.6; background: radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%); }
       #flash { position: absolute; inset: 0; opacity: 0; background: #ff1e2d; mix-blend-mode: screen; }
       #dim { position: absolute; inset: 0; opacity: 0; background: rgba(10, 8, 12, 0.58); }
+      /* Blick durch den Türspion: runder Ausschnitt, Rest schwarz */
+      #peephole { position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle 440px at 50% 43%, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 360px, rgba(0, 0, 0, 0.75) 410px, #000 440px); }
 
       /* HUD oben links: Label, große Zahl, Restzeit, rote Delta-Zeile */
       #hud { position: absolute; left: 64px; top: 250px; width: 900px; color: var(--text); opacity: 0; text-shadow: var(--shadow); }
@@ -50,8 +52,8 @@
       .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
 
       /* Endcard: Frage + Antwort-Pills + Kommentar-Aufruf */
-      #endcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 520px; box-sizing: border-box; gap: 26px; }
-      #endcard h2 { margin: 0 0 22px; opacity: 0; font: 500 84px/1.1 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      #endcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 470px; box-sizing: border-box; gap: 26px; }
+      #endcard h2 { margin: 0 0 22px; max-width: 900px; text-align: center; opacity: 0; font: 500 84px/1.1 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
       .pill { opacity: 0; padding: 14px 42px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.72); background: rgba(255, 255, 255, 0.1); font: italic 400 46px/1.2 "Newsreader"; color: var(--text); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); }
       .pill.alt { border: 2px dashed #ff5a6a; background: rgba(255, 60, 80, 0.2); color: #ffdfe3; }
       .cta { opacity: 0; margin-top: 40px; font: 600 23px/1 "Inter"; letter-spacing: 0.24em; color: rgba(255, 255, 255, 0.92); }
@@ -59,60 +61,78 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="30">
-      <div id="world" class="clip" data-start="0" data-duration="30" data-track-index="0">
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="60">
+      <div id="world" class="clip" data-start="0" data-duration="60" data-track-index="0">
         <canvas id="three-layer" width="1080" height="1920"></canvas>
       </div>
 
-      <div id="overlay" class="clip" data-start="0" data-duration="30" data-track-index="1">
+      <div id="overlay" class="clip" data-start="0" data-duration="60" data-track-index="1">
         <div id="vignette"></div>
         <div id="flash"></div>
         <div id="dim"></div>
+        <div id="peephole"></div>
 
         <div id="hud">
           <div class="hud-label">NOTRUFE OHNE ANTWORT</div>
           <div class="hud-num" id="hud-num">0</div>
           <div class="hud-sub" id="hud-sub">NOCH 12:00:00 STUNDEN</div>
-          <div class="hud-delta" data-in="4.00" data-out="6.40"><div class="amt">Notruf 110: offline</div><div class="lbl">Polizei außer Dienst</div></div>
-          <div class="hud-delta" data-in="7.20" data-out="8.68"><div class="amt">19:00 Uhr</div><div class="lbl">Die Nacht beginnt</div></div>
-          <div class="hud-delta" data-in="10.40" data-out="11.95"><div class="amt">−97 % Licht</div><div class="lbl">Wohnstraße</div></div>
-          <div class="hud-delta" data-in="16.70" data-out="18.70"><div class="amt">−1 Schaufenster</div><div class="lbl">Supermarkt</div></div>
-          <div class="hud-delta plus" data-in="22.95" data-out="24.50"><div class="amt">07:00 Uhr</div><div class="lbl">Alles vorbei</div></div>
+          <div class="hud-delta" data-in="4.25" data-out="6.75"><div class="amt">Notruf 110: offline</div><div class="lbl">Polizei außer Dienst</div></div>
+          <div class="hud-delta" data-in="7.70" data-out="9.30"><div class="amt">19:00 Uhr</div><div class="lbl">Die Nacht beginnt</div></div>
+          <div class="hud-delta" data-in="11.65" data-out="12.75"><div class="amt">−97 % Licht</div><div class="lbl">Wohnstraße</div></div>
+          <div class="hud-delta" data-in="17.40" data-out="19.20"><div class="amt">19:30 Uhr</div><div class="lbl">Die Ersten kommen raus</div></div>
+          <div class="hud-delta" data-in="24.60" data-out="26.85"><div class="amt">00:00 Uhr</div><div class="lbl">Autos in Flammen</div></div>
+          <div class="hud-delta" data-in="37.70" data-out="40.70"><div class="amt">03:00 Uhr</div><div class="lbl">Es klopft</div></div>
+          <div class="hud-delta plus" data-in="46.45" data-out="48.15"><div class="amt">07:00 Uhr</div><div class="lbl">Alles vorbei</div></div>
         </div>
 
         <!-- CAPTIONS:START -->
-        <div id="hook" data-out="3.54"><p>Mal angenommen … für zwölf Stunden gibt es keine Regeln mehr.</p></div>
-        <div class="cap" id="cap-b2" data-in="3.54" data-out="6.43"><p>Keine Polizei, kein Notruf, keine Strafe.</p></div>
-        <div class="cap" id="cap-b3" data-in="6.43" data-out="8.69"><p>Um 19 Uhr heult die Sirene.</p></div>
-        <div class="cap" id="cap-b4" data-in="8.69" data-out="11.97"><p>Die meisten verbarrikadieren sich: Rollläden runter, Licht aus.</p></div>
-        <div class="cap" id="cap-b5" data-in="11.97" data-out="14.63"><p>Aber ein paar merken schnell: Niemand hält sie auf.</p></div>
-        <div class="cap" id="cap-b6" data-in="14.63" data-out="17.28"><p>Ampeln sind egal, Schaufenster nur noch Glas.</p></div>
-        <div class="cap" id="cap-b7" data-in="17.28" data-out="19.29"><p>Das Gefährlichste ist nicht der Fremde draußen …</p></div>
-        <div class="cap" id="cap-b8" data-in="19.29" data-out="22.53"><p>… sondern der Nachbar, der weiß, dass du allein bist.</p></div>
-        <div class="cap" id="cap-b9" data-in="22.53" data-out="24.53"><p>Um 7 Uhr morgens ist alles vorbei.</p></div>
+        <div id="hook" data-out="3.75"><p>Mal angenommen … für zwölf Stunden gibt es keine Regeln mehr.</p></div>
+        <div class="cap" id="cap-b2" data-in="3.75" data-out="6.81"><p>Keine Polizei. Kein Notruf. Keine Strafe.</p></div>
+        <div class="cap" id="cap-b3" data-in="6.81" data-out="9.32"><p>Um 19 Uhr heult die Sirene.</p></div>
+        <div class="cap" id="cap-b4" data-in="9.32" data-out="10.48"><p>Alle rennen nach Hause.</p></div>
+        <div class="cap" id="cap-b5" data-in="10.48" data-out="12.64"><p>Rollläden runter. Licht aus.</p></div>
+        <div class="cap" id="cap-b6" data-in="12.64" data-out="14.47"><p>Dann … Stille.</p></div>
+        <div class="cap" id="cap-b7" data-in="14.47" data-out="17.25"><p>Jeder fragt sich: Was machen die anderen?</p></div>
+        <div class="cap" id="cap-b8" data-in="17.25" data-out="19.23"><p>Um halb acht kommen die Ersten raus.</p></div>
+        <div class="cap" id="cap-b9" data-in="19.23" data-out="21.13"><p>Masken auf. Fackeln an.</p></div>
+        <div class="cap" id="cap-b10" data-in="21.13" data-out="24.41"><p>Ampeln sind egal. Schaufenster … nur noch Glas.</p></div>
+        <div class="cap" id="cap-b11" data-in="24.41" data-out="26.84"><p>Um Mitternacht brennen die ersten Autos.</p></div>
+        <div class="cap" id="cap-b12" data-in="26.84" data-out="30.14"><p>Wer jetzt noch draußen ist: rennen … oder verstecken.</p></div>
+        <div class="cap" id="cap-b13" data-in="30.14" data-out="32.78"><p>Doch das Gefährlichste ist nicht der Fremde mit Maske …</p></div>
+        <div class="cap" id="cap-b14" data-in="32.78" data-out="36.38"><p>… sondern der Nachbar, der weiß, dass du allein bist.</p></div>
+        <div class="cap" id="cap-b15" data-in="36.38" data-out="40.69"><p>Um 3 Uhr nachts … klopft es an deiner Tür.</p></div>
+        <div class="cap" id="cap-b16" data-in="40.69" data-out="41.92"><p>Dreimal.</p></div>
+        <div class="cap" id="cap-b17" data-in="41.92" data-out="46.26"><p>Du rührst dich nicht. Du atmest nicht. Und wartest.</p></div>
+        <div class="cap" id="cap-b18" data-in="46.26" data-out="48.15"><p>Um 7 Uhr ist alles vorbei.</p></div>
+        <div class="cap" id="cap-b19" data-in="48.15" data-out="51.70"><p>Rollläden hoch. Alle tun so, als wäre nichts gewesen.</p></div>
+        <div class="cap" id="cap-b20" data-in="51.70" data-out="55.10"><p>Aber du weißt jetzt … wer an deiner Tür stand.</p></div>
         <!-- CAPTIONS:END -->
 
         <div id="endcard">
-          <h2>Was würdest du tun?</h2>
-          <div class="pill">Mich verbarrikadieren?</div>
-          <div class="pill">Rausgehen?</div>
-          <div class="pill">Die Stadt verlassen?</div>
+          <h2>Würdest du die Tür aufmachen?</h2>
+          <div class="pill">Auf keinen Fall?</div>
+          <div class="pill">Erst durch den Spion schauen?</div>
+          <div class="pill">Hinten rausschleichen?</div>
           <div class="pill alt">… oder etwas ganz anderes?</div>
           <div class="cta">SCHREIB ES IN DIE KOMMENTARE</div>
           <div class="arrow">↓</div>
         </div>
       </div>
 
-      <audio id="voiceover" src="./assets/audio/voiceover.wav" data-start="0" data-duration="30" data-track-index="2" data-volume="1"></audio>
-      <audio id="sounddesign" src="./assets/audio/sounddesign.wav" data-start="0" data-duration="30" data-track-index="3" data-volume="1"></audio>
+      <audio id="voiceover" src="./assets/audio/voiceover.wav" data-start="0" data-duration="60" data-track-index="2" data-volume="1"></audio>
+      <audio id="sounddesign" src="./assets/audio/sounddesign.wav" data-start="0" data-duration="60" data-track-index="3" data-volume="1"></audio>
     </div>
 
     <script id="cues" type="application/json">
       {
-        "policeOff": 3.95, "hudIn": 3.7, "sirenOn": 7.15, "purgeStart": 7.2,
-        "shutterStart": 10.15, "shutterEnd": 11.6, "purgersIn": 12.0,
-        "panToMarket": 15.6, "glass": 16.62, "neighbor": 19.9,
-        "dawnStart": 22.35, "sirenEndOn": 22.55, "purgeEnd": 22.9, "sirenEndOff": 24.3, "end": 24.6
+        "policeOff": 4.15, "hudIn": 3.9, "sirenOn": 7.6, "runHome": 9.35,
+        "shutterStart": 10.5, "shutterEnd": 12.0, "peekStart": 14.5, "peekEnd": 17.28,
+        "halfEight": 17.35, "flares": 20.3, "panToMarket": 22.35, "glass": 23.72,
+        "midnight": 24.55, "fire1": 24.9, "fire2": 25.4, "fire3": 25.9,
+        "runner": 26.9, "hide": 29.25, "maskTurn": 31.4, "neighbor": 33.3,
+        "threeAm": 36.5, "knock1": 39.72, "knock2": 40.07, "knock3": 40.42, "peep": 42.0, "tilt": 44.9,
+        "dawnStart": 46.3, "sevenAm": 46.4, "sirenEndOn": 46.45, "sirenEndOff": 48.6,
+        "shuttersUp": 48.3, "reveal": 52.9, "end": 55.1
       }
     </script>
     <script>
@@ -142,6 +162,8 @@
       tl.to("#flash", { opacity: 0, duration: 0.7, ease: "power2.out" }, C.sirenOn + 0.12);
       tl.to("#vignette", { opacity: 1, duration: 1.2 }, C.sirenOn);
       tl.to("#vignette", { opacity: 0.6, duration: 1.4 }, C.dawnStart);
+      tl.fromTo("#peephole", { opacity: 0 }, { opacity: 1, duration: 0.05 }, C.peep);
+      tl.to("#peephole", { opacity: 0, duration: 0.04 }, C.dawnStart - 0.04);
 
       // Endcard
       tl.to("#dim", { opacity: 1, duration: 0.5, ease: "power1.out" }, C.end);
@@ -149,7 +171,7 @@
       tl.fromTo("#endcard h2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C.end + 0.1);
       tl.fromTo(".pill", { opacity: 0, y: 18, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", stagger: 0.28 }, C.end + 0.55);
       tl.fromTo(".cta", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C.end + 1.85);
-      tl.fromTo(".arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 6, duration: 0.45, ease: "sine.inOut", repeat: 6, yoyo: true }, C.end + 1.95);
+      tl.fromTo(".arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 6, duration: 0.45, ease: "sine.inOut", repeat: 5, yoyo: true }, C.end + 1.95);
 
       window.__timelines["main"] = tl;
     </script>

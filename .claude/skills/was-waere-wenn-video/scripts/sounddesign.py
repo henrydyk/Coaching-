@@ -11,7 +11,8 @@ sound.json:
   "events": [{"type": "impact", "t": 0, "gain": -6, ...}]
 }
 Event-Typen: impact, whoosh, powerdown, siren, shutters, glass, crackle, ticks, heartbeat,
-             birds, pop, riser, cash. "t" darf auch eine Liste sein.
+             birds, pop, riser, cash, knock, ignite, whoomp, steps. "t" darf auch eine Liste sein.
+Optional: "bed_gain": [[t, dB], ...] als Lautstärke-Automation des Klangteppichs.
 """
 import json, os, subprocess, sys
 
@@ -238,6 +239,41 @@ def cash():
     return norm(fade(x + 0.3 * hp(RNG.standard_normal(len(t)), 4000) * np.exp(-t * 60), 0.002, 0.1))
 
 
+def knock():
+    t = secs(0.5)
+    x = sum(a * np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, a, d in ((165, 1.0, 28), (410, 0.6, 45), (780, 0.35, 70)))
+    x += 0.7 * bp(RNG.standard_normal(len(t)), 300, 2600) * np.exp(-t * 55)
+    return norm(echo(fade(x, 0.001, 0.1), taps=((0.045, 0.3), (0.11, 0.15))))
+
+
+def ignite():
+    t = secs(1.4)
+    strike = hp(RNG.standard_normal(len(t)), 2000) * np.exp(-t * 7)
+    sizzle = bp(RNG.standard_normal(len(t)), 3000, 9000) * 0.35 * np.minimum(1, t / 0.05)
+    return norm(fade(strike + sizzle, 0.003, 0.4))
+
+
+def whoomp():
+    t = secs(1.3)
+    env = np.minimum(1, t / 0.15) * np.exp(-np.maximum(0, t - 0.15) * 3.5)
+    x = lp(RNG.standard_normal(len(t)), 260) * env + 0.6 * np.sin(2 * np.pi * 48 * t) * env
+    return norm(fade(x, 0.01, 0.3))
+
+
+def steps(dur, rate=3.0, crowd=1):
+    t = secs(dur)
+    x = np.zeros_like(t)
+    st = secs(0.12)
+    for c in range(crowd):
+        off = RNG.uniform(0, 1 / rate)
+        for k in np.arange(off, dur - 0.1, 1 / rate):
+            k += RNG.uniform(-0.02, 0.02)
+            i = int(max(0, k) * SR)
+            hit = lp(RNG.standard_normal(len(st)), 900) * np.exp(-st * 60) + 0.5 * np.sin(2 * np.pi * 95 * st) * np.exp(-st * 40)
+            x[i:i + len(st)] += hit[: max(0, len(x) - i)] * RNG.uniform(0.5, 1)
+    return norm(fade(x, 0.02, 0.1))
+
+
 def make_event(ev):
     k = ev["type"]
     if k == "impact":
@@ -272,6 +308,14 @@ def make_event(ev):
         return riser(ev.get("dur", 1.5))
     if k == "cash":
         return cash()
+    if k == "knock":
+        return knock()
+    if k == "ignite":
+        return ignite()
+    if k == "whoomp":
+        return whoomp()
+    if k == "steps":
+        return steps(ev.get("dur", 2), ev.get("rate", 3), ev.get("crowd", 1))
     raise ValueError(f"Unbekannter Event-Typ: {k}")
 
 
@@ -287,7 +331,7 @@ def place(buf, x, t, gain, pan=0.0):
 
 def read_wav_mono(path):
     raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", str(SR), "-f", "f32le", "-"],
-                         capture_output=True, check=True).stdout
+                         stdin=subprocess.DEVNULL, capture_output=True, check=True).stdout
     return np.frombuffer(raw, dtype=np.float32)
 
 
@@ -303,6 +347,12 @@ def main(video_dir):
         place(bed, x, seg["from"], seg.get("gain", -20), 0)
         # leichte Stereobreite
         place(bed, np.roll(x, int(0.011 * SR)) * 0.35, seg["from"], seg.get("gain", -20), 0.8)
+
+    # "bed_gain": [[t, dB], ...] – Automation des Klangteppichs (z. B. echte Stille bei "Stille.")
+    if cfg.get("bed_gain"):
+        pts = np.array(cfg["bed_gain"], dtype=float)
+        curve = np.interp(np.arange(N) / SR, pts[:, 0], pts[:, 1])
+        bed *= db(curve)
 
     for ev in cfg.get("events", []):
         times = ev["t"] if isinstance(ev["t"], list) else [ev["t"]]
@@ -345,7 +395,7 @@ def write_wav(path, stereo):
 
 def lufs(path):
     r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-af", "ebur128", "-f", "null", "-"],
-                       capture_output=True, text=True)
+                       stdin=subprocess.DEVNULL, capture_output=True, text=True)
     line = [l for l in r.stderr.splitlines() if l.strip().startswith("I:")][-1]
     return float(line.split()[1])
 

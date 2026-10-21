@@ -1,70 +1,265 @@
 {
-  "title": "Mal angenommen … es gibt keine Regeln mehr",
-  "voice": "de-DE-ConradNeural",
-  "rate": "+10%",
+  "title": "Mal angenommen … es gibt keine Regeln mehr (60 s)",
+  "voice": "de-DE-FlorianMultilingualNeural",
+  "rate": "+4%",
+  "pitch": "-2Hz",
+  "voice_fx": "cinematic",
   "lead_in": 0.35,
   "beats": [
     {
       "id": "b1",
+      "role": "hook",
       "caption": "Mal angenommen … für zwölf Stunden gibt es keine Regeln mehr.",
-      "pause": 0.3,
-      "role": "hook"
+      "say": [
+        {
+          "text": "Mal angenommen …",
+          "gap": 0.2
+        },
+        "für zwölf Stunden gibt es keine Regeln mehr."
+      ],
+      "pause": 0.35
     },
     {
       "id": "b2",
-      "caption": "Keine Polizei, kein Notruf, keine Strafe.",
-      "pause": 0.25,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Keine Polizei. Kein Notruf. Keine Strafe.",
+      "say": [
+        {
+          "text": "Keine Polizei.",
+          "gap": 0.12
+        },
+        {
+          "text": "Kein Notruf.",
+          "gap": 0.12
+        },
+        {
+          "text": "Keine Strafe.",
+          "rate": "-4%"
+        }
+      ],
+      "pause": 0.3
     },
     {
       "id": "b3",
+      "role": "caption",
       "caption": "Um 19 Uhr heult die Sirene.",
       "say": "Um neunzehn Uhr heult die Sirene.",
-      "pause": 0.8,
-      "role": "caption"
+      "pause": 0.75
     },
     {
       "id": "b4",
-      "caption": "Die meisten verbarrikadieren sich: Rollläden runter, Licht aus.",
-      "pause": 0.25,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Alle rennen nach Hause.",
+      "rate": "+14%",
+      "pause": 0.2
     },
     {
       "id": "b5",
-      "caption": "Aber ein paar merken schnell: Niemand hält sie auf.",
-      "pause": 0.25,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Rollläden runter. Licht aus.",
+      "say": [
+        {
+          "text": "Rollläden runter.",
+          "gap": 0.15
+        },
+        "Licht aus."
+      ],
+      "pause": 0.45
     },
     {
       "id": "b6",
-      "caption": "Ampeln sind egal, Schaufenster nur noch Glas.",
-      "pause": 0.3,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Dann … Stille.",
+      "say": [
+        {
+          "text": "Dann …",
+          "rate": "-8%",
+          "gap": 0.35
+        },
+        {
+          "text": "Stille.",
+          "rate": "-12%",
+          "volume": "-10%"
+        }
+      ],
+      "pause": 0.5
     },
     {
       "id": "b7",
-      "caption": "Das Gefährlichste ist nicht der Fremde draußen …",
-      "pause": 0.1,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Jeder fragt sich: Was machen die anderen?",
+      "rate": "+0%",
+      "pause": 0.35
     },
     {
       "id": "b8",
-      "caption": "… sondern der Nachbar, der weiß, dass du allein bist.",
-      "pause": 0.55,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Um halb acht kommen die Ersten raus.",
+      "pause": 0.25
     },
     {
       "id": "b9",
-      "caption": "Um 7 Uhr morgens ist alles vorbei.",
-      "say": "Um sieben Uhr morgens ist alles vorbei.",
-      "pause": 0.3,
-      "role": "caption"
+      "role": "caption",
+      "caption": "Masken auf. Fackeln an.",
+      "say": [
+        {
+          "text": "Masken auf.",
+          "gap": 0.15
+        },
+        "Fackeln an."
+      ],
+      "pitch": "-4Hz",
+      "pause": 0.3
     },
     {
       "id": "b10",
-      "caption": "Was würdest du tun? Schreib es in die Kommentare.",
-      "pause": 0.2,
-      "role": "endcard"
+      "role": "caption",
+      "caption": "Ampeln sind egal. Schaufenster … nur noch Glas.",
+      "say": [
+        {
+          "text": "Ampeln sind egal.",
+          "gap": 0.15
+        },
+        {
+          "text": "Schaufenster …",
+          "gap": 0.2
+        },
+        "nur noch Glas."
+      ],
+      "pause": 0.3
+    },
+    {
+      "id": "b11",
+      "role": "caption",
+      "caption": "Um Mitternacht brennen die ersten Autos.",
+      "pause": 0.3
+    },
+    {
+      "id": "b12",
+      "role": "caption",
+      "caption": "Wer jetzt noch draußen ist: rennen … oder verstecken.",
+      "say": [
+        {
+          "text": "Wer jetzt noch draußen ist:",
+          "rate": "+10%",
+          "gap": 0.12
+        },
+        {
+          "text": "rennen …",
+          "gap": 0.25
+        },
+        {
+          "text": "oder verstecken.",
+          "rate": "-6%"
+        }
+      ],
+      "pause": 0.4
+    },
+    {
+      "id": "b13",
+      "role": "caption",
+      "caption": "Doch das Gefährlichste ist nicht der Fremde mit Maske …",
+      "rate": "+0%",
+      "pause": 0.12
+    },
+    {
+      "id": "b14",
+      "role": "caption",
+      "caption": "… sondern der Nachbar, der weiß, dass du allein bist.",
+      "rate": "-2%",
+      "pause": 0.55
+    },
+    {
+      "id": "b15",
+      "role": "caption",
+      "caption": "Um 3 Uhr nachts … klopft es an deiner Tür.",
+      "say": [
+        {
+          "text": "Um drei Uhr nachts …",
+          "gap": 0.45
+        },
+        "klopft es an deiner Tür."
+      ],
+      "rate": "-8%",
+      "pitch": "-4Hz",
+      "pause": 1.25
+    },
+    {
+      "id": "b16",
+      "role": "caption",
+      "caption": "Dreimal.",
+      "rate": "-10%",
+      "pitch": "-4Hz",
+      "volume": "-8%",
+      "pause": 0.6,
+      "say": "Drei Mal."
+    },
+    {
+      "id": "b17",
+      "role": "caption",
+      "caption": "Du rührst dich nicht. Du atmest nicht. Und wartest.",
+      "say": [
+        {
+          "text": "Du rührst dich nicht.",
+          "gap": 0.3
+        },
+        {
+          "text": "Du atmest nicht.",
+          "gap": 0.35
+        },
+        "Und wartest."
+      ],
+      "rate": "-8%",
+      "volume": "-12%",
+      "pause": 0.7
+    },
+    {
+      "id": "b18",
+      "role": "caption",
+      "caption": "Um 7 Uhr ist alles vorbei.",
+      "say": "Um sieben Uhr ist alles vorbei.",
+      "pause": 0.3
+    },
+    {
+      "id": "b19",
+      "role": "caption",
+      "caption": "Rollläden hoch. Alle tun so, als wäre nichts gewesen.",
+      "say": [
+        {
+          "text": "Rollläden hoch.",
+          "gap": 0.15
+        },
+        "Alle tun so, als wäre nichts gewesen."
+      ],
+      "pause": 0.4
+    },
+    {
+      "id": "b20",
+      "role": "caption",
+      "caption": "Aber du weißt jetzt … wer an deiner Tür stand.",
+      "say": [
+        {
+          "text": "Aber du weißt jetzt …",
+          "gap": 0.4
+        },
+        "wer an deiner Tür stand."
+      ],
+      "rate": "-6%",
+      "pitch": "-3Hz",
+      "pause": 0.5
+    },
+    {
+      "id": "b21",
+      "role": "endcard",
+      "caption": "Würdest du die Tür aufmachen? Schreib es in die Kommentare.",
+      "say": [
+        {
+          "text": "Würdest du die Tür aufmachen?",
+          "gap": 0.35
+        },
+        "Schreib es in die Kommentare."
+      ],
+      "pause": 0.2
     }
   ]
 }

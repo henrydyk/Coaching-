@@ -28,8 +28,18 @@ for s in WhisperModel("small", device="cpu", compute_type="int8").transcribe(a, 
     print(" ".join(f"{w.word.strip()}@{w.start:.2f}" for w in s.words))
 ```
 
-Whisper verhört sich bei TTS manchmal ("Fabare kadieren"). Für Timing reicht das. Prüfe in so einem
-Fall aber, ob die Aussprache plausibel ist, und hilf über `say` nach, falls nötig.
+Whisper verhört sich bei TTS manchmal ("Fabare kadieren"). Für Timing reicht das. Für die
+Aussprache-Prüfung nimmst du das Modell `medium`. Erkennt auch `medium` ein Wort mehrfach falsch,
+formulierst du es um. Bei Florian erprobt:
+- „Dreimal.“ → `say: "Drei Mal."`
+- „Du wartest.“ → „Und wartest.“
+- „Würdest du aufmachen?“ → „Würdest du die Tür aufmachen?“
+
+Kurze Einzelwörter und Fragen ohne Kontext werden am häufigsten verschluckt.
+
+**Stolperfalle `ffmpeg` in Schleifen:** `ffmpeg` liest stdin und frisst dann in `while read`-Schleifen
+die nächsten Zeichen. Nimm dort immer `ffmpeg -nostdin …` bzw. in Python `stdin=subprocess.DEVNULL`.
+Die Skripte machen das bereits.
 
 ## HyperFrames-Vertrag (was hier zählt)
 
@@ -65,3 +75,10 @@ Fall aber, ob die Aussprache plausibel ist, und hilf über `say` nach, falls nö
   Bereich eines Shots auslässt oder versetzt.
 - Bei harten Schnitten dürfen Objekte, die nur in einem Shot sichtbar sein sollen, genau auf der
   Schnittzeit umschalten, zum Beispiel `visible = t >= C.purgersIn`.
+- Blick von innen nach außen (Türspion): Die Kamera steht in der Hausbox. Deren Flächen werden von
+  innen weggeculled, doppelseitige Teile wie Türblatt und Rollläden aber nicht. Das Türblatt
+  blendest du in dem Shot aus (Instanz auf Skala 0). Der runde Ausschnitt ist ein CSS-Overlay
+  (`#peephole`) mit `fov: 100`.
+- Ändere während eines laufenden Renders keine Dateien im Videoordner.
+- Laufzeit: ca. 0,6 s pro Frame mit Software-WebGL und einem Worker, also ca. 10 min für 30 s und
+  ca. 20 min für 60 s.

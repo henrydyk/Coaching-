@@ -1,66 +1,132 @@
 {
-  "voice": "de-DE-ConradNeural",
-  "total": 27.924,
+  "voice": "de-DE-FlorianMultilingualNeural",
+  "total": 58.572,
   "beats": [
     {
       "id": "b1",
       "caption": "Mal angenommen … für zwölf Stunden gibt es keine Regeln mehr.",
       "start": 0.35,
-      "end": 3.32
+      "end": 3.477
     },
     {
       "id": "b2",
-      "caption": "Keine Polizei, kein Notruf, keine Strafe.",
-      "start": 3.62,
-      "end": 6.262
+      "caption": "Keine Polizei. Kein Notruf. Keine Strafe.",
+      "start": 3.827,
+      "end": 6.587
     },
     {
       "id": "b3",
       "caption": "Um 19 Uhr heult die Sirene.",
-      "start": 6.512,
-      "end": 7.973
+      "start": 6.887,
+      "end": 8.648
     },
     {
       "id": "b4",
-      "caption": "Die meisten verbarrikadieren sich: Rollläden runter, Licht aus.",
-      "start": 8.773,
-      "end": 11.799
+      "caption": "Alle rennen nach Hause.",
+      "start": 9.398,
+      "end": 10.361
     },
     {
       "id": "b5",
-      "caption": "Aber ein paar merken schnell: Niemand hält sie auf.",
-      "start": 12.049,
-      "end": 14.462
+      "caption": "Rollläden runter. Licht aus.",
+      "start": 10.561,
+      "end": 12.273
     },
     {
       "id": "b6",
-      "caption": "Ampeln sind egal, Schaufenster nur noch Glas.",
-      "start": 14.712,
-      "end": 17.062
+      "caption": "Dann … Stille.",
+      "start": 12.723,
+      "end": 14.047
     },
     {
       "id": "b7",
-      "caption": "Das Gefährlichste ist nicht der Fremde draußen …",
-      "start": 17.362,
-      "end": 19.27
+      "caption": "Jeder fragt sich: Was machen die anderen?",
+      "start": 14.547,
+      "end": 16.978
     },
     {
       "id": "b8",
-      "caption": "… sondern der Nachbar, der weiß, dass du allein bist.",
-      "start": 19.37,
-      "end": 22.058
+      "caption": "Um halb acht kommen die Ersten raus.",
+      "start": 17.328,
+      "end": 19.062
     },
     {
       "id": "b9",
-      "caption": "Um 7 Uhr morgens ist alles vorbei.",
-      "start": 22.608,
-      "end": 24.306
+      "caption": "Masken auf. Fackeln an.",
+      "start": 19.312,
+      "end": 20.913
     },
     {
       "id": "b10",
-      "caption": "Was würdest du tun? Schreib es in die Kommentare.",
-      "start": 24.606,
-      "end": 27.724
+      "caption": "Ampeln sind egal. Schaufenster … nur noch Glas.",
+      "start": 21.213,
+      "end": 24.193
+    },
+    {
+      "id": "b11",
+      "caption": "Um Mitternacht brennen die ersten Autos.",
+      "start": 24.493,
+      "end": 26.624
+    },
+    {
+      "id": "b12",
+      "caption": "Wer jetzt noch draußen ist: rennen … oder verstecken.",
+      "start": 26.924,
+      "end": 29.816
+    },
+    {
+      "id": "b13",
+      "caption": "Doch das Gefährlichste ist nicht der Fremde mit Maske …",
+      "start": 30.216,
+      "end": 32.739
+    },
+    {
+      "id": "b14",
+      "caption": "… sondern der Nachbar, der weiß, dass du allein bist.",
+      "start": 32.859,
+      "end": 35.907
+    },
+    {
+      "id": "b15",
+      "caption": "Um 3 Uhr nachts … klopft es an deiner Tür.",
+      "start": 36.457,
+      "end": 39.523
+    },
+    {
+      "id": "b16",
+      "caption": "Dreimal.",
+      "start": 40.773,
+      "end": 41.396
+    },
+    {
+      "id": "b17",
+      "caption": "Du rührst dich nicht. Du atmest nicht. Und wartest.",
+      "start": 41.996,
+      "end": 45.636
+    },
+    {
+      "id": "b18",
+      "caption": "Um 7 Uhr ist alles vorbei.",
+      "start": 46.336,
+      "end": 47.928
+    },
+    {
+      "id": "b19",
+      "caption": "Rollläden hoch. Alle tun so, als wäre nichts gewesen.",
+      "start": 48.228,
+      "end": 51.381
+    },
+    {
+      "id": "b20",
+      "caption": "Aber du weißt jetzt … wer an deiner Tür stand.",
+      "start": 51.781,
+      "end": 54.683
+    },
+    {
+      "id": "b21",
+      "caption": "Würdest du die Tür aufmachen? Schreib es in die Kommentare.",
+      "start": 55.183,
+      "end": 58.372
     }
   ]
 }

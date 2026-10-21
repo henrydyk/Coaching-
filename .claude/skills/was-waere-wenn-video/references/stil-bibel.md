@@ -84,16 +84,48 @@ durchsichtig). Partikel wie Scheine, Scherben oder Funken zeigen Ereignisse.
 Untertitel: Einblenden mit Fade in 0,2 s und 14 px Hochgleiten, Ausblenden in 0,16 s. Die Wechsel
 sitzen auf den Satzanfängen aus `timing.json`, `captions.py` erledigt das.
 
-## 4. Ton
+## 4. Ton und Erzählweise
 
-- **Stimme:** männlich, ruhig, dokumentarisch, Standard `de-DE-ConradNeural`, `rate` +4 bis +10 %.
-  `de-DE-FlorianMultilingualNeural` klingt heller und energischer, `de-DE-KillianNeural` ist eine
-  Alternative.
-- **Klangteppich:** leiser Synth-Pad im Hintergrund, der Stimmung folgend, unter der Stimme
-  abgesenkt (Ducking).
-- **Effekte:** auf jedem Schlüsselereignis, zum Beispiel ein Impact auf dem Hook-Frame, Whoosh auf
-  Kamerafahrten, Sirene, Glas, Herzschlag im Twist und Vögel bei der Auflösung.
-- **Lautheit:** Stimme −16 LUFS, Sounddesign ca. −22 LUFS, Summe ca. −14 LUFS.
+**Stimme:** Standard ist `de-DE-FlorianMultilingualNeural` mit `voice_fx: "cinematic"` (Wärme,
+Präsenz, Kompression, kleiner Raum), `rate` +4 %, `pitch` −2 Hz. Florian liegt mit ca. 126 Hz nah am
+Erzähler der Bunker-Referenz (129 Hz) und klingt erzählerischer als `de-DE-ConradNeural`, der ruhig
+und eher nachrichtlich wirkt. Conrad ist die Alternative für ruhige oder dokumentarische Themen.
+
+**Spannend erzählen statt vorlesen.** Der Nutzer will Spannung, deshalb bekommt jeder Beat eine Regie:
+- Teile Sätze in `say`-Segmente und setze **Pausen vor die Enthüllung**:
+  `["Um drei Uhr nachts …" (gap 0.45), "klopft es an deiner Tür."]`.
+- Das Tempo folgt der Handlung: Action-Sätze schnell (`rate` +10 bis +14 %), unheimliche Sätze
+  langsam und tiefer (`rate` −8 bis −14 %, `pitch` −4 Hz), Flüster-Momente leiser (`volume` −10 %).
+- Stakkato in kurzen Segmenten mit kleinen Lücken (0,12–0,15 s): „Keine Polizei. | Kein Notruf. |
+  Keine Strafe.“
+- Ein-Wort-Sätze als eigener Beat mit langer Pause davor („Drei Mal.“), Geräusch in die Pause legen
+  (Klopfen).
+- Echte Stille ist ein Effekt: Der Klangteppich fällt per `bed_gain` für 1–2 s weg („Dann … Stille.“).
+- Uhrzeiten geben bei langen Videos Struktur („Um halb acht …“, „Um Mitternacht …“, „Um 3 Uhr …“).
+  Der HUD-Countdown läuft dann stückweise genau auf diese Uhrzeiten.
+- Der Twist zahlt sich im Bild aus: Ein Detail aus dem Twist taucht früher schon auf (gleiche Jacke
+  beim Klopfer und beim Nachbarn).
+
+**Klangteppich:** leiser Synth-Pad, der Stimmung folgend, unter der Stimme abgesenkt (Ducking).
+
+**Effekte:** auf jedem Schlüsselereignis, zum Beispiel Impact auf dem Hook-Frame und auf harten
+Schnitten, Whoosh auf Kamerafahrten, Sirene, Glas, Zünden, Feuer-Wumms, Schritte, Klopfen,
+Herzschlag im Twist, Vögel bei der Auflösung, Pops für die Pills.
+
+**Lautheit:** Stimme −16 LUFS, Sounddesign ca. −22 LUFS, Summe ca. −14 LUFS.
+
+## 4b. Menschen
+
+- Nutze immer `makeCharacter` mit Kleidung, Hautton, Frisur (short/long/bald/cap) und Animation über
+  `animateCharacter`, nie Kapseln.
+- Bösewichte bekommen Kapuze und Maske (`mask: true, hood: true`), dunkle Kleidung und eine Fackel
+  als Lichtquelle (`PointLight` in der Hand).
+- In Nahaufnahmen (Maske, Gesicht) koppelt der Schatten-Ausschnitt automatisch an den Kameraabstand,
+  so bleibt der Schatten scharf.
+- Jede Figur hat einen klaren Laufweg (`pathAt`) und ist nur in ihren Shots sichtbar. Das spart
+  Renderzeit.
+- Vor der Szene testest du neue Figuren und Posen in einer Mini-Komposition (Kontaktbild), erst dann
+  baust du sie ein.
 
 ## 5. Stil B (nur auf Wunsch): 2D-Flat-Erzählung
 
