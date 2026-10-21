@@ -1,0 +1,67 @@
+# Technik: HyperFrames, three.js, Audio, Umgebung
+
+## Einrichtung (einmal pro Session/Container)
+
+```bash
+npm install                                   # hyperframes, three, gsap, @fontsource/* aus package.json
+pip install -q edge-tts faster-whisper scipy  # Stimme, Transkription, Audio-Filter
+export HYPERFRAMES_BROWSER_PATH=$(ls /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell | head -1)
+```
+
+- Die offiziellen HyperFrames-Skills installierst du als Plugin (Nutzer-Scope, gilt ab der nächsten
+  Sitzung): `claude plugin marketplace add heygen-com/hyperframes && claude plugin install hyperframes@hyperframes`.
+  Der Hinweis auf Git-LFS-Platzhalter betrifft nur Testdaten des Repos, ein `lfs pull` ist nicht nötig.
+- HyperFrames sucht den Browser über `HYPERFRAMES_BROWSER_PATH`. `render.sh` setzt die Variable
+  automatisch. Ohne sie meldet `doctor` "Chrome Headless Shell is required".
+- Der Session-Proxy terminiert TLS neu. `edge-tts` nutzt hart `certifi`, deshalb biegt `tts.py`
+  `certifi.where()` auf `/root/.ccr/ca-bundle.crt` um. TLS-Prüfung niemals abschalten.
+- Die eingebaute HyperFrames-TTS (Kokoro) kann **kein Deutsch**. Deshalb nutzen wir edge-tts.
+- Wortzeitstempel für Cues bekommst du per Whisper. Das Modell "small" lädt beim ersten Mal von
+  HuggingFace:
+
+```python
+import subprocess, numpy as np
+from faster_whisper import WhisperModel
+raw = subprocess.run(["ffmpeg","-v","error","-i","assets/audio/voiceover.wav","-ac","1","-ar","16000","-f","s16le","-"],capture_output=True).stdout
+a = np.frombuffer(raw, np.int16).astype(np.float32) / 32768   # Array übergeben: das PyAV-Dateiöffnen ist hier kaputt
+for s in WhisperModel("small", device="cpu", compute_type="int8").transcribe(a, language="de", word_timestamps=True)[0]:
+    print(" ".join(f"{w.word.strip()}@{w.start:.2f}" for w in s.words))
+```
+
+Whisper verhört sich bei TTS manchmal ("Fabare kadieren"). Für Timing reicht das. Prüfe in so einem
+Fall aber, ob die Aussprache plausibel ist, und hilf über `say` nach, falls nötig.
+
+## HyperFrames-Vertrag (was hier zählt)
+
+- Die Root ist `<div id="root" data-composition-id="main" data-width="1080" data-height="1920"
+  data-duration="<s>">`. **`data-duration` ist Pflicht**, weil der three-Adapter keine Dauer ableitet.
+- Es gibt genau eine pausierte GSAP-Timeline: `window.__timelines["main"] = tl`. Registriere sie
+  erst nach dem Aufbau.
+- three.js rendert nur in `hf-seek` (`event.detail.time`), nie per `requestAnimationFrame`.
+  Aufwendigen Aufbau (Schriften für Canvas-Texturen) hängst du an `window.__hf.buildReady.world`.
+- Kein `Math.random()`, `Date.now()` und kein Netz zur Renderzeit. Nutze `mulberry32(seed)` aus dem
+  Kit. Alle Libs und Schriften liegen lokal in `assets/vendor` bzw. `assets/fonts`, jede Schrift mit
+  `@font-face`.
+- `<audio>` braucht eine `id`, sonst bleibt der Render stumm. Kein `crossorigin`.
+- Tweens laufen nie auf `.clip`-Elementen mit `visibility`/`autoAlpha`. Opacity animierst du an
+  Kind-Elementen.
+- Die Lint-Warnung `nested_structure_needs_subcomposition` betrifft nur die Studio-Ansicht und ist
+  für den Render unkritisch.
+- Befehle im Videoordner: `npx hyperframes lint | check | snapshot --at 1,5,9 | render --output renders/x.mp4`.
+  Ein Snapshot mit 7 Frames dauert ca. 12 s. Ein Render von 30 s bei 30 fps dauert einige Minuten
+  (Software-WebGL).
+
+## three.js-Erfahrungen
+
+- Gerendert wird mit Software-WebGL. Instanziere viele gleiche Objekte (`InstancedMesh`). Ein paar
+  hundert Häuser plus Fenster laufen flüssig.
+- Fenster sind `MeshBasicMaterial` (leuchten unabhängig vom Licht), Glows sind additive Sprites.
+  Echte `PointLight`s setzt du sparsam ein (≤ 5).
+- Das Schatten-Frustum folgt dem Kamera-Ziel (`applyMood(..., { focus })`), sonst fehlen Schatten
+  in entfernten Shots.
+- Die Kamera kann im Haus starten: Häuser stehen bei x = ±13 mit 8 m Tiefe, die Straße ist ±5,
+  Gehwege bis ±8. Prüfe Kamerapositionen gegen die Hausboxen.
+- Laternen und Autos haben anfangs Motive verdeckt. Halte Sichtachsen frei, indem du Objekte im
+  Bereich eines Shots auslässt oder versetzt.
+- Bei harten Schnitten dürfen Objekte, die nur in einem Shot sichtbar sein sollen, genau auf der
+  Schnittzeit umschalten, zum Beispiel `visible = t >= C.purgersIn`.

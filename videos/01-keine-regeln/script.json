@@ -1,0 +1,70 @@
+{
+  "title": "Mal angenommen … es gibt keine Regeln mehr",
+  "voice": "de-DE-ConradNeural",
+  "rate": "+10%",
+  "lead_in": 0.35,
+  "beats": [
+    {
+      "id": "b1",
+      "caption": "Mal angenommen … für zwölf Stunden gibt es keine Regeln mehr.",
+      "pause": 0.3,
+      "role": "hook"
+    },
+    {
+      "id": "b2",
+      "caption": "Keine Polizei, kein Notruf, keine Strafe.",
+      "pause": 0.25,
+      "role": "caption"
+    },
+    {
+      "id": "b3",
+      "caption": "Um 19 Uhr heult die Sirene.",
+      "say": "Um neunzehn Uhr heult die Sirene.",
+      "pause": 0.8,
+      "role": "caption"
+    },
+    {
+      "id": "b4",
+      "caption": "Die meisten verbarrikadieren sich: Rollläden runter, Licht aus.",
+      "pause": 0.25,
+      "role": "caption"
+    },
+    {
+      "id": "b5",
+      "caption": "Aber ein paar merken schnell: Niemand hält sie auf.",
+      "pause": 0.25,
+      "role": "caption"
+    },
+    {
+      "id": "b6",
+      "caption": "Ampeln sind egal, Schaufenster nur noch Glas.",
+      "pause": 0.3,
+      "role": "caption"
+    },
+    {
+      "id": "b7",
+      "caption": "Das Gefährlichste ist nicht der Fremde draußen …",
+      "pause": 0.1,
+      "role": "caption"
+    },
+    {
+      "id": "b8",
+      "caption": "… sondern der Nachbar, der weiß, dass du allein bist.",
+      "pause": 0.55,
+      "role": "caption"
+    },
+    {
+      "id": "b9",
+      "caption": "Um 7 Uhr morgens ist alles vorbei.",
+      "say": "Um sieben Uhr morgens ist alles vorbei.",
+      "pause": 0.3,
+      "role": "caption"
+    },
+    {
+      "id": "b10",
+      "caption": "Was würdest du tun? Schreib es in die Kommentare.",
+      "pause": 0.2,
+      "role": "endcard"
+    }
+  ]
+}

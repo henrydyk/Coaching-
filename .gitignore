@@ -1,0 +1,5 @@
+node_modules/
+.hyperframes/
+.tts-cache/
+renders/
+*.log

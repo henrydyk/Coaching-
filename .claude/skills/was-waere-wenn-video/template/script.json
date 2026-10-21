@@ -1,0 +1,12 @@
+{
+  "title": "Mal angenommen … PRÄMISSE",
+  "voice": "de-DE-ConradNeural",
+  "rate": "+8%",
+  "lead_in": 0.35,
+  "beats": [
+    { "id": "b1", "role": "hook", "caption": "Mal angenommen … PRÄMISSE.", "pause": 0.3 },
+    { "id": "b2", "role": "caption", "caption": "Aber es gibt einen Haken: REGEL.", "pause": 0.25 },
+    { "id": "b3", "role": "caption", "caption": "Satz mit Zahl.", "say": "Satz mit ausgeschriebener Zahl.", "pause": 0.25 },
+    { "id": "b9", "role": "endcard", "caption": "Was würdest du tun? Schreib es in die Kommentare.", "pause": 0.2 }
+  ]
+}

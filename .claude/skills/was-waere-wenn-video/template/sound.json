@@ -1,0 +1,13 @@
+{
+  "duration": 30,
+  "target_lufs": -22,
+  "bed": [
+    { "mood": "dusk", "from": 0, "to": 15, "gain": -18 },
+    { "mood": "dawn", "from": 14, "to": 30, "gain": -18 }
+  ],
+  "events": [
+    { "type": "impact", "t": 0.0, "gain": -4 },
+    { "type": "whoosh", "t": 6.0, "dur": 0.5, "gain": -12 },
+    { "type": "pop", "t": [25.55, 25.83, 26.11, 26.39], "gain": -16 }
+  ]
+}

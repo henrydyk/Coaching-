@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>TITEL</title>
+    <script src="./assets/vendor/gsap.min.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./assets/vendor/three.module.min.js" } }
+    </script>
+    <style>
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-italic.woff2") format("woff2"); font-weight: 500; font-style: italic; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; }
+
+      :root {
+        --text: #ffffff;
+        --text-soft: rgba(255, 255, 255, 0.78);
+        --minus: #ff4d55;
+        --plus: #6ee59a;
+        --shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 28px rgba(0, 0, 0, 0.45);
+      }
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      .clip { position: absolute; inset: 0; }
+      #three-layer { width: 100%; height: 100%; display: block; }
+
+      #vignette { position: absolute; inset: 0; opacity: 0.6; background: radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%); }
+      #flash { position: absolute; inset: 0; opacity: 0; background: #ff1e2d; mix-blend-mode: screen; }
+      #dim { position: absolute; inset: 0; opacity: 0; background: rgba(10, 8, 12, 0.58); }
+
+      /* HUD oben links: Label, große Zahl, Restzeit, rote Delta-Zeile */
+      #hud { position: absolute; left: 64px; top: 250px; width: 900px; color: var(--text); opacity: 0; text-shadow: var(--shadow); }
+      .hud-label { font: 600 22px/1 "Inter"; letter-spacing: 0.2em; opacity: 0.92; }
+      .hud-num { margin-top: 12px; font: 500 86px/1 "Newsreader"; font-variant-numeric: lining-nums tabular-nums; }
+      .hud-sub { margin-top: 12px; font: 600 17px/1 "Inter"; letter-spacing: 0.22em; color: var(--text-soft); }
+      .hud-delta { position: absolute; left: 0; top: 186px; opacity: 0; }
+      .hud-delta .amt { font: 600 34px/1.1 "Inter"; color: var(--minus); }
+      .hud-delta.plus .amt { color: var(--plus); }
+      .hud-delta .lbl { margin-top: 6px; font: 500 21px/1.2 "Inter"; color: var(--text-soft); }
+
+      /* Hook und Untertitel: Serif, Untertitel kursiv */
+      #hook { position: absolute; left: 0; right: 0; top: 560px; display: flex; justify-content: center; }
+      #hook p { margin: 0; max-width: 900px; text-align: center; font: 400 80px/1.12 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      .cap { position: absolute; left: 0; right: 0; top: 1110px; display: flex; justify-content: center; opacity: 0; }
+      .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+
+      /* Endcard: Frage + Antwort-Pills + Kommentar-Aufruf */
+      #endcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 520px; box-sizing: border-box; gap: 26px; }
+      #endcard h2 { margin: 0 0 22px; opacity: 0; font: 500 84px/1.1 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      .pill { opacity: 0; padding: 14px 42px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.72); background: rgba(255, 255, 255, 0.1); font: italic 400 46px/1.2 "Newsreader"; color: var(--text); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); }
+      .pill.alt { border: 2px dashed #ff5a6a; background: rgba(255, 60, 80, 0.2); color: #ffdfe3; }
+      .cta { opacity: 0; margin-top: 40px; font: 600 23px/1 "Inter"; letter-spacing: 0.24em; color: rgba(255, 255, 255, 0.92); }
+      .arrow { display: block; width: 60px; height: 50px; opacity: 0; text-align: center; font: 500 44px/1 "Inter"; color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="30">
+      <div id="world" class="clip" data-start="0" data-duration="30" data-track-index="0">
+        <canvas id="three-layer" width="1080" height="1920"></canvas>
+      </div>
+
+      <div id="overlay" class="clip" data-start="0" data-duration="30" data-track-index="1">
+        <div id="vignette"></div>
+        <div id="flash"></div>
+        <div id="dim"></div>
+
+        <div id="hud">
+          <div class="hud-label">ZÄHLER-LABEL</div>
+          <div class="hud-num" id="hud-num">0</div>
+          <div class="hud-sub" id="hud-sub">NOCH 24:00:00 STUNDEN</div>
+          <!-- Delta-Zeilen: class="hud-delta" (rot) oder "hud-delta plus" (grün), Zeiten aus #cues -->
+          <div class="hud-delta" data-in="5.00" data-out="7.00"><div class="amt">−380.000 €</div><div class="lbl">Beispiel</div></div>
+        </div>
+
+        <!-- CAPTIONS:START -->
+        <!-- CAPTIONS:END -->
+
+        <div id="endcard">
+          <h2>Was würdest du tun?</h2>
+          <div class="pill">Antwort A?</div>
+          <div class="pill">Antwort B?</div>
+          <div class="pill">Antwort C?</div>
+          <div class="pill alt">… oder etwas ganz anderes?</div>
+          <div class="cta">SCHREIB ES IN DIE KOMMENTARE</div>
+          <div class="arrow">↓</div>
+        </div>
+      </div>
+
+      <audio id="voiceover" src="./assets/audio/voiceover.wav" data-start="0" data-duration="30" data-track-index="2" data-volume="1"></audio>
+      <audio id="sounddesign" src="./assets/audio/sounddesign.wav" data-start="0" data-duration="30" data-track-index="3" data-volume="1"></audio>
+    </div>
+
+    <script id="cues" type="application/json">
+      { "hudIn": 3.7, "start": 7.0, "end": 25.0 }
+    </script>
+    <script>
+      const C = JSON.parse(document.getElementById("cues").textContent);
+      const tl = gsap.timeline({ paused: true });
+
+      // Hook ist ab Frame 0 sichtbar (Thumbnail!) und geht, wenn der zweite Satz kommt
+      const hook = document.getElementById("hook");
+      tl.fromTo("#hook p", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, +hook.dataset.out - 0.3);
+
+      document.querySelectorAll(".cap").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, tIn);
+        tl.fromTo(el.firstElementChild, { y: 14 }, { y: 0, duration: 0.35, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.16, ease: "power1.in" }, tOut - 0.16);
+      });
+
+      tl.to("#hud", { opacity: 1, duration: 0.4, ease: "power1.out" }, C.hudIn);
+      document.querySelectorAll(".hud-delta").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        tl.fromTo(el, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.25 }, tOut - 0.25);
+      });
+
+      // Startschuss: farbiger Blitz (Farbe in #flash anpassen), Vignette stärker
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.38, duration: 0.12 }, C.start);
+      tl.to("#flash", { opacity: 0, duration: 0.7, ease: "power2.out" }, C.start + 0.12);
+      tl.to("#vignette", { opacity: 1, duration: 1.2 }, C.start);
+      
+      // Endcard
+      tl.to("#dim", { opacity: 1, duration: 0.5, ease: "power1.out" }, C.end);
+      tl.to("#hud", { opacity: 0.35, duration: 0.5 }, C.end);
+      tl.fromTo("#endcard h2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C.end + 0.1);
+      tl.fromTo(".pill", { opacity: 0, y: 18, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", stagger: 0.28 }, C.end + 0.55);
+      tl.fromTo(".cta", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C.end + 1.85);
+      tl.fromTo(".arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 6, duration: 0.45, ease: "sine.inOut", repeat: 6, yoyo: true }, C.end + 1.95);
+
+      window.__timelines["main"] = tl;
+    </script>
+    <script type="module" src="./assets/scene.js"></script>
+  </body>
+</html>
