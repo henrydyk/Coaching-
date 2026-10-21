@@ -1,4 +1,4 @@
-# Stil-Bibel: "Mal angenommen"-Videos
+# Stil-Bibel: 3D-Story-Videos (Format A „Mal angenommen“, Format B „Echte Raubzüge“)
 
 Abgeleitet aus drei Referenzvideos: ein deutsches 3D-Low-Poly-Video mit dem Kontostand-Zähler
 (Billion-Euro-Video), ein englisches Kino-3D-Video mit dem Weltbevölkerungs-Zähler und ein deutsches
@@ -135,3 +135,49 @@ und flachen Vektorflächen. Untertitel stehen Wort für Wort in fetten, schmalen
 schräge Etiketten ("15 MIN > JEDE STRASSE"), Infografiken auf Notizzetteln, eine Uhr oben
 ("☀ TAG 1 | 18:40") und am Ende "Teil 2"/"Folge für Teil 2". Umsetzung: SVG und GSAP statt
 three.js. Die Wortzeiten für die Karaoke-Untertitel liefert Whisper.
+
+
+## 6. Format B: Echte Raubzüge (Hauptnische des Kanals)
+
+Reale Coups werden in der Low-Poly-Welt Schritt für Schritt nachgestellt. Referenz:
+`videos/02-gruenes-gewoelbe/`.
+
+**Pflicht vor dem Skript:** Recherchiere den Fall mit Quellen (WebSearch/WebFetch) und lege
+`quellen.md` im Videoordner an: Tabelle „Aussage im Video → Beleg-URL“. Ins Video kommt nur, was dort
+belegt ist. Unklare Details (genaue Minuten, Zahl der Schläge, Gesichter) behauptest du nicht, das
+Bild bleibt dann allgemein. Prüfe den aktuellen Stand offener Punkte („fehlt bis heute“) mit einer
+frischen Suche und nenne dem Nutzer das Datum der jüngsten Quelle. **Keine Namen** von Tätern oder
+Privatpersonen nennen, keine Verherrlichung. Die Täter sind gesichtslos (Kapuze, Sturmhaube).
+
+**Bauplan (60 s, ca. 135 Wörter):**
+
+| Phase | Inhalt | Bild |
+|---|---|---|
+| Hook | Ort, Uhrzeit, Beutesumme in einem Satz | Stadt-Silhouette bei Nacht, Wahrzeichen |
+| Plan | „Der Plan beginnt Tage vorher.“ und die Vorbereitung | Tageslicht vs. Nacht, Nahaufnahme der Vorbereitung |
+| Ablenkung | Strom aus, Licht aus, Alarm umgangen | Feuer, Funken, Laternen gehen in einer Welle aus |
+| Einstieg | Wie sie reinkommen | Figuren mit Taschenlampen-Kegeln |
+| Tat | Werkzeug, Treffer, Beute-Zähler läuft hoch | Innenraum, Vitrine, Splitter, Alarmlicht |
+| Alarm | Uhrzeit des Notrufs | Überwachungskamera-Look, Blaulicht |
+| Flucht | Spuren verwischen | Pulver, brennendes Fluchtauto |
+| Verschwinden | „Dann … sind sie verschwunden.“ | leerer Tatort, Stille (`bed_gain`) |
+| Ermittlung | Jahre als Zeitsprünge | Razzia, Asservaten, Gericht |
+| Offenes Ende | Was fehlt bis heute | ein einzelnes Objekt im Dunkeln |
+| Endcard | „Wo ist …?“ und Theorien-Pills, „SCHREIB DEINE THEORIE IN DIE KOMMENTARE“ | gedimmtes Objekt |
+
+**HUD Format B:**
+- Kennzeichnung oben in Rot: „ECHTE RAUBZÜGE #N · REKONSTRUKTION“.
+- Label: „BEUTE · VERSICHERUNGSWERT“, die Zahl in Euro steigt Stück für Stück während der Tat.
+- Unterzeile wechselt: Ort → Datum + Uhrzeit → „SCHMUCKSTÜCKE n / 21“ → Endstand.
+- Delta-Zeilen bilden die Zeitleiste: rot für Tat-Ereignisse („Stromkasten · in Brand gesetzt“),
+  grün für Ermittlungserfolge („Nov. 2020 · Festnahmen“), rot für das offene Ende („Fehlt bis heute“).
+
+**Bildsprache Format B:**
+- Kühle blaue Nacht statt Rot.
+- Überwachungskamera-Shot mit Graustufen-Filter auf dem Canvas, Zeilen, „● REC“, Rahmen.
+- Taschenlampen als SpotLight mit sichtbarem Kegel.
+- Innenräume ohne Himmel (`scene.background` = Nebelfarbe).
+- Pro Schauplatz eine eigene Gruppe, weit entfernt aufgebaut und nur in ihren Shots sichtbar.
+
+**Sound Format B:** Klangteppich `noir`, dazu Schleifer, Klirren, Stromschlag, Glas-Treffer,
+Museumsalarm, Martinshorn, Überwachungs-Brummen, Wumms beim Feuer und Stille vor der Auflösung.

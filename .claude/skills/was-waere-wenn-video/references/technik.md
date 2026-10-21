@@ -37,6 +37,13 @@ formulierst du es um. Bei Florian erprobt:
 
 Kurze Einzelwörter und Fragen ohne Kontext werden am häufigsten verschluckt.
 
+**Achtung, Multilingual-Stimmen kippen die Sprache:** Florian ist eine Multilingual-Stimme und rät die
+Sprache pro Segment. Kurze Segmente mit Zahlwörtern („Einundzwanzig Schmuckstücke.“) wurden auf
+Englisch gesprochen („Einen Swansick Schmackstack“). Abhilfe:
+- vollständige Sätze mit deutschem Kontext („Sie erbeuten einundzwanzig Schmuckstücke mit …“),
+- keine Segmente, die nur aus Zahlwörtern bestehen,
+- danach immer mit Whisper `medium` gegenprüfen.
+
 **Stolperfalle `ffmpeg` in Schleifen:** `ffmpeg` liest stdin und frisst dann in `while read`-Schleifen
 die nächsten Zeichen. Nimm dort immer `ffmpeg -nostdin …` bzw. in Python `stdin=subprocess.DEVNULL`.
 Die Skripte machen das bereits.
@@ -80,5 +87,10 @@ Die Skripte machen das bereits.
   blendest du in dem Shot aus (Instanz auf Skala 0). Der runde Ausschnitt ist ein CSS-Overlay
   (`#peephole`) mit `fov: 100`.
 - Ändere während eines laufenden Renders keine Dateien im Videoordner.
+- Mehrere Schauplätze in einem Video: Baue jeden als eigene `THREE.Group` an einem weit entfernten
+  Ort (z. B. x = ±800) und schalte `group.visible` nur in seinen Shots ein. Die Stimmung schaltest du
+  hart pro Shot (Liste `[Startzeit, Stimmung, Himmel an?]`), nicht weich überblendet.
+- Kamerafahrten an Gebäuden: Laternenmasten in der Sichtachse vermeiden. Die Kamera gerade auf das
+  Motiv richten, wenn Laternen im Raster stehen.
 - Laufzeit: ca. 0,6 s pro Frame mit Software-WebGL und einem Worker, also ca. 10 min für 30 s und
   ca. 20 min für 60 s.

@@ -553,6 +553,18 @@ export function animateCharacter(ch, s = {}) {
       AR.elbow.rotation.set(0, 0, 0.35 * up + Math.sin(at * 9) * 0.35 * up);
       break;
     }
+    case "chop": { // Axthieb: at = Zeit relativ zum Aufprall (negativ = holt aus)
+      const up = at < 0 ? smooth(clamp(-at / 0.3)) : smooth(clamp(at / 0.35));
+      AR.sh.rotation.set(-0.75 - 2.0 * up, 0, 0.1);
+      AR.elbow.rotation.set(-0.15 - 0.5 * up, 0, 0);
+      AL.sh.rotation.set(-0.7 - 1.6 * up, 0, -0.25);
+      AL.elbow.rotation.set(-0.3, 0, 0);
+      break;
+    }
+    case "reach": // in die Vitrine greifen
+      AR.sh.rotation.set(-1.15 + Math.sin((s.t || 0) * 5) * 0.12, 0, 0.15);
+      AR.elbow.rotation.set(-0.35 + Math.sin((s.t || 0) * 5 + 1) * 0.2, 0, 0);
+      break;
     case "holdLow": // etwas locker in der Hand halten (z. B. die Maske)
       AR.sh.rotation.set(-0.35, 0, 0.1);
       AR.elbow.rotation.set(-0.9, 0, 0);
@@ -581,6 +593,58 @@ export function pathAt(points, s) {
   }
   const [x, z] = points[points.length - 1];
   return { x, z, yaw: 0, done: true };
+}
+
+// ---------- Architektur & Schmuck ----------
+// Drehkörper aus Profil [[radius, höhe], ...] (Kuppeln, Turmhauben, Laternen)
+export function lathe(profile, color, { segments = 12, opts = {} } = {}) {
+  const pts = profile.map(([r, y]) => new THREE.Vector2(r, y));
+  const m = new THREE.Mesh(new THREE.LatheGeometry(pts, segments), lambert(color, { side: THREE.DoubleSide, ...opts }));
+  m.castShadow = m.receiveShadow = true;
+  return m;
+}
+
+// Brillant (Krone + Pavillon), flach schattiert, glänzend
+export function makeBrilliant(size = 1, color = "#eef6ff") {
+  const prof = [[0, -0.86], [0.995, -0.02], [1, 0], [0.995, 0.03], [0.56, 0.32], [0, 0.33]].map(([r, y]) => new THREE.Vector2(r * size, y * size));
+  const g = new THREE.LatheGeometry(prof, 16);
+  const mat = new THREE.MeshPhongMaterial({ color, emissive: "#3a4a66", specular: "#ffffff", shininess: 140, flatShading: true });
+  return new THREE.Mesh(g, mat);
+}
+
+// Ein Schmuckstück: Goldfassung + mehrere kleine Diamanten, optional Funkeln
+export function makeJewel(seed = 1, { width = 0.22, gems = 7, big = 0 } = {}) {
+  const r = mulberry32(seed);
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(geo("jewelBase", () => new THREE.TorusGeometry(0.06, 0.012, 5, 14)), lambert("#d4af37", { emissive: "#3a2a08" }));
+  base.rotation.x = -Math.PI / 2;
+  base.scale.set(width / 0.12, width / 0.12, 1);
+  g.add(base);
+  const gemGeo = geo("gem", () => new THREE.OctahedronGeometry(1, 0));
+  const center = new THREE.Mesh(gemGeo, basic("#ffffff"));
+  center.scale.setScalar(width * 0.12);
+  center.position.y = 0.02;
+  g.add(center);
+  for (let i = 0; i < gems; i++) {
+    const a = (i / gems) * Math.PI * 2 + r() * 0.3;
+    const d = (0.25 + r() * 0.75) * width * 0.45;
+    const m = new THREE.Mesh(gemGeo, basic("#f4fbff"));
+    const sz = 0.01 + r() * 0.012;
+    m.scale.set(sz, sz * 1.2, sz);
+    m.position.set(Math.cos(a) * d, 0.012, Math.sin(a) * d);
+    g.add(m);
+  }
+  if (big) {
+    const b = makeBrilliant(big);
+    b.position.y = big * 0.9;
+    g.add(b);
+  }
+  const glint = makeGlow("#e6f3ff", width * 1.2);
+  glint.position.y = 0.04;
+  g.add(glint);
+  g.userData.glint = glint;
+  g.userData.ph = r() * 10;
+  return g;
 }
 
 // ---------- Feuer & Rauch ----------

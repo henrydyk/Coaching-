@@ -7,11 +7,13 @@ Schreibt <video-ordner>/assets/audio/sounddesign.wav (48 kHz, Stereo)
 sound.json:
 {
   "duration": 30,
-  "bed":    [{"mood": "dusk|night|dawn|tension|wonder", "from": 0, "to": 8}],
+  "bed":    [{"mood": "dusk|night|dawn|tension|wonder|noir", "from": 0, "to": 8}],
   "events": [{"type": "impact", "t": 0, "gain": -6, ...}]
 }
 Event-Typen: impact, whoosh, powerdown, siren, shutters, glass, crackle, ticks, heartbeat,
-             birds, pop, riser, cash, knock, ignite, whoomp, steps. "t" darf auch eine Liste sein.
+             birds, pop, riser, cash, knock, ignite, whoomp, steps, grinder, clink, zap, alarm,
+             martinshorn, hum. "t" darf auch eine Liste sein.
+Klangteppich-Stimmungen: dusk, night, tension, dawn, wonder, noir (Raubzug).
 Optional: "bed_gain": [[t, dB], ...] als Lautstärke-Automation des Klangteppichs.
 """
 import json, os, subprocess, sys
@@ -91,6 +93,8 @@ MOODS = {
     "tension": dict(freqs=[73.4, 103.8, 146.8], cutoff=600, sub=36.7, trem=0.25, trem_rate=3.0),
     "dawn": dict(freqs=[146.8, 185.0, 220.0, 293.7], cutoff=1500, sub=73.4),
     "wonder": dict(freqs=[130.8, 164.8, 196.0, 246.9, 329.6], cutoff=1800, sub=65.4),
+    # Raubzug: dunkler Moll-Septakkord mit pulsierendem Puls (Heist/Noir)
+    "noir": dict(freqs=[73.4, 87.3, 110.0, 130.8], cutoff=700, sub=36.7, trem=0.3, trem_rate=2.2),
 }
 
 
@@ -274,6 +278,49 @@ def steps(dur, rate=3.0, crowd=1):
     return norm(fade(x, 0.02, 0.1))
 
 
+def grinder(dur=1.3):
+    t = secs(dur)
+    f = 3400 + 250 * np.sin(2 * np.pi * 7 * t) + 300 * RNG.standard_normal(len(t)).cumsum() / np.sqrt(len(t))
+    tone = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.4 * np.sin(2 * np.pi * np.cumsum(f * 2.01) / SR)
+    x = 0.6 * tone + bp(RNG.standard_normal(len(t)), 2500, 8000) * 0.8
+    x *= 0.75 + 0.25 * np.sin(2 * np.pi * 11 * t)
+    return norm(fade(x, 0.08, 0.15))
+
+
+def clink():
+    t = secs(0.7)
+    x = sum(np.sin(2 * np.pi * f * t) * np.exp(-t * d) for f, d in ((1850, 9), (2790, 12), (4310, 16)))
+    return norm(fade(x + 0.3 * hp(RNG.standard_normal(len(t)), 3000) * np.exp(-t * 80), 0.001, 0.1))
+
+
+def zap(dur=0.9):
+    t = secs(dur)
+    buzz = signal.sawtooth(2 * np.pi * 100 * t) * (RNG.random(len(t)) < 0.6)
+    x = bp(buzz, 150, 4000) + 0.6 * hp(RNG.standard_normal(len(t)), 3000) * (RNG.random(len(t)) < 0.05)
+    return norm(fade(x * np.exp(-t * 2), 0.005, 0.2))
+
+
+def alarm(dur=4.0):
+    t = secs(dur)
+    f = np.where((t * 2.5) % 1 < 0.5, 960, 770)
+    x = signal.square(2 * np.pi * np.cumsum(f) / SR) * 0.5
+    return norm(fade(lp(x, 2500), 0.02, 0.3))
+
+
+def martinshorn(dur=2.5):
+    t = secs(dur)
+    f = np.where((t / 0.65) % 2 < 1, 440, 585)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    x = np.tanh(1.6 * (np.sin(ph) + 0.4 * np.sin(2 * ph) + 0.2 * np.sin(3 * ph)))
+    return norm(echo(fade(bp(x, 300, 3000), 0.3, 0.6)))
+
+
+def hum(dur=4.0):
+    t = secs(dur)
+    x = sum(np.sin(2 * np.pi * 50 * k * t) / k for k in (1, 2, 3, 5)) + 0.15 * bp(RNG.standard_normal(len(t)), 2000, 6000)
+    return norm(fade(x, 0.2, 0.3))
+
+
 def make_event(ev):
     k = ev["type"]
     if k == "impact":
@@ -314,6 +361,18 @@ def make_event(ev):
         return ignite()
     if k == "whoomp":
         return whoomp()
+    if k == "grinder":
+        return grinder(ev.get("dur", 1.3))
+    if k == "clink":
+        return clink()
+    if k == "zap":
+        return zap(ev.get("dur", 0.9))
+    if k == "alarm":
+        return alarm(ev.get("dur", 4))
+    if k == "martinshorn":
+        return martinshorn(ev.get("dur", 2.5))
+    if k == "hum":
+        return hum(ev.get("dur", 4))
     if k == "steps":
         return steps(ev.get("dur", 2), ev.get("rate", 3), ev.get("crowd", 1))
     raise ValueError(f"Unbekannter Event-Typ: {k}")

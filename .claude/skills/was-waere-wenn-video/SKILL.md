@@ -1,9 +1,15 @@
 ---
 name: was-waere-wenn-video
-description: Erstellt fertige TikTok-Videos (MP4, 1080x1920) im "Mal angenommen … / Was wäre wenn"-Format, komplett im Code mit HyperFrames und three.js. Immer auf Deutsch. Benutzen, sobald der Nutzer ein neues Video, Skript, Szenario oder eine Änderung an einem bestehenden Video in diesem Repo möchte ("mach ein Video über …", "was wäre wenn …", "mal angenommen …", "neues TikTok", "30-Sekunden-Video").
+description: Erstellt fertige TikTok-Videos (MP4, 1080x1920) als 3D-Low-Poly-Geschichten mit laufendem Zähler, komplett im Code mit HyperFrames und three.js. Immer auf Deutsch. Hauptformat "Echte Raubzüge" (reale Coups recherchiert und Minute für Minute nachgestellt), außerdem "Mal angenommen / Was wäre wenn". Benutzen, sobald der Nutzer ein neues Video, einen Fall, ein Szenario oder eine Änderung an einem bestehenden Video in diesem Repo möchte ("mach ein Video über den Raub …", "nächster Fall", "was wäre wenn …", "neues TikTok", "60-Sekunden-Video").
 ---
 
-# Was-wäre-wenn-Videos (Stil "Mal angenommen")
+# 3D-Story-Videos: „Echte Raubzüge“ und „Mal angenommen“
+
+**Formate:**
+- **B – Echte Raubzüge** ist das Hauptformat und der Standard, wenn der Nutzer nichts anderes sagt:
+  ein realer Coup, recherchiert, mit Quellen belegt und nachgestellt. Referenz:
+  `videos/02-gruenes-gewoelbe/`. Fallideen stehen in `references/fallideen.md`.
+- **A – Mal angenommen** ist ein hypothetisches Szenario. Referenz: `videos/01-keine-regeln/`.
 
 Jedes Video ist ein HyperFrames-Projekt unter `videos/NN-<slug>/`. Die 3D-Welt läuft in three.js über den
 HyperFrames-`three`-Adapter (`hf-seek`), HUD, Untertitel und Endcard sind HTML und GSAP. Stimme, Musik
@@ -23,6 +29,8 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
 
 ## Ablauf
 
+0. **Nur Format B: Recherche.** Recherchiere den Fall (WebSearch/WebFetch) und lege `quellen.md`
+   an, siehe Stil-Bibel Abschnitt 6. Ins Video kommt nichts ohne Beleg. Nenne keine Täternamen.
 1. **Thema → Skript** (`script.json`). Nutze den Bauplan aus der Stil-Bibel: Hook, Haken, laufender
    Zähler, Eskalation (ein Satz = ein Bild, 2–3 s), Twist, Endfrage. Zielwerte: ca. 2,3–2,6 Wörter pro
    Sekunde. Bei 30 s sind das ca. 70 Wörter Voiceover plus 2 s Endcard, bei 60 s ca. 135 Wörter
@@ -69,14 +77,17 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
   Maske klar erkennbar sein. Jede Figur, die im Text vorkommt (Läufer, Klopfer, Nachbar), ist im
   Bild, während über sie gesprochen wird.
 - Die Endcard zeigt Frage, 3 Antwort-Pills plus eine gestrichelte rote "… oder etwas ganz
-  anderes?"-Pill und darunter "SCHREIB ES IN DIE KOMMENTARE ↓".
+  anderes?"-Pill und darunter "SCHREIB ES IN DIE KOMMENTARE ↓" (Format B: "SCHREIB DEINE THEORIE
+  IN DIE KOMMENTARE").
+- Format B: Jede Aussage steht in `quellen.md`. Im HUD steht "REKONSTRUKTION". Täter bleiben
+  gesichtslos und ohne Namen.
 
 ## Wiederverwendbare Teile
 
 | Datei | Zweck |
 |---|---|
 | `template/index.html` | Komposition 1080x1920: Canvas, HUD, Untertitel-Marker, Endcard, GSAP-Timeline |
-| `template/assets/lowpoly-kit.js` | Himmel-Shader, Stimmungs-Keyframes, instanzierte Häuser mit Fenstern/Rollläden, Bäume, **Menschen mit Gelenken** (`makeCharacter` + `animateCharacter`: gehen, rennen, ducken, klopfen, winken, Fackel halten; Purge-Maske, Kapuze, Frisuren), `pathAt` für Laufwege, Feuer, Rauch, Glow-Sprites, Schild-Texturen, `CameraRig`, deutsche Zahlformate |
+| `template/assets/lowpoly-kit.js` | Himmel-Shader, Stimmungs-Keyframes, instanzierte Häuser mit Fenstern/Rollläden, Bäume, **Menschen mit Gelenken** (`makeCharacter` + `animateCharacter`: gehen, rennen, ducken, klopfen, winken, Fackel/Taschenlampe halten, Axthieb `chop`, Greifen `reach`; Purge-Maske, Kapuze, Frisuren), `pathAt` für Laufwege, Drehkörper `lathe` (Kuppeln, Turmhauben), `makeBrilliant`, `makeJewel`, Feuer, Rauch, Glow-Sprites, Schild-Texturen, `CameraRig`, deutsche Zahlformate |
 | `template/assets/scene.js` | Startgerüst einer Szene |
 | `scripts/tts.py` | edge-tts (Standard `de-DE-FlorianMultilingualNeural` + `voice_fx: cinematic`), Regie pro Beat/Segment (rate, pitch, volume, Pausen), Stille getrimmt, LUFS-normalisiert |
 | `scripts/captions.py` | Hook und Untertitel aus `timing.json` in `index.html` schreiben |

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Grünes Gewölbe</title>
+    <script src="./assets/vendor/gsap.min.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./assets/vendor/three.module.min.js" } }
+    </script>
+    <style>
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-italic.woff2") format("woff2"); font-weight: 500; font-style: italic; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; }
+
+      :root {
+        --text: #ffffff;
+        --text-soft: rgba(255, 255, 255, 0.78);
+        --minus: #ff4d55;
+        --plus: #6ee59a;
+        --shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 28px rgba(0, 0, 0, 0.45);
+      }
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      .clip { position: absolute; inset: 0; }
+      #three-layer { width: 100%; height: 100%; display: block; }
+
+      #vignette { position: absolute; inset: 0; opacity: 0.8; background: radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%); }
+      #dim { position: absolute; inset: 0; opacity: 0; background: rgba(6, 8, 12, 0.55); }
+
+      /* Überwachungskamera-Look */
+      #cctv { position: absolute; inset: 0; opacity: 0; }
+      #cctv .lines { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 2px, rgba(0, 0, 0, 0) 2px 6px); }
+      #cctv .rec { position: absolute; right: 64px; top: 252px; font: 600 26px/1 "Inter"; letter-spacing: 0.16em; color: #fff; text-shadow: var(--shadow); }
+      #cctv .dot { display: inline-block; width: 18px; height: 18px; margin-right: 12px; border-radius: 50%; background: #ff3b3b; vertical-align: 1px; }
+      #cctv .cam { position: absolute; right: 64px; top: 296px; font: 600 17px/1 "Inter"; letter-spacing: 0.2em; color: var(--text-soft); text-shadow: var(--shadow); }
+      #cctv .frame { position: absolute; inset: 210px 40px 330px 40px; border: 2px solid rgba(255, 255, 255, 0.35); }
+
+      /* HUD oben links */
+      #hud { position: absolute; left: 64px; top: 226px; width: 900px; color: var(--text); opacity: 0; text-shadow: var(--shadow); }
+      .hud-tag { font: 600 15px/1 "Inter"; letter-spacing: 0.24em; color: #ff6b6b; margin-bottom: 14px; }
+      .hud-label { font: 600 22px/1 "Inter"; letter-spacing: 0.2em; opacity: 0.92; }
+      .hud-num { margin-top: 12px; font: 500 86px/1 "Newsreader"; font-variant-numeric: lining-nums tabular-nums; }
+      .hud-sub { margin-top: 12px; font: 600 17px/1 "Inter"; letter-spacing: 0.22em; color: var(--text-soft); }
+      .hud-delta { position: absolute; left: 0; top: 214px; opacity: 0; }
+      .hud-delta .amt { font: 600 34px/1.1 "Inter"; color: var(--minus); }
+      .hud-delta.plus .amt { color: var(--plus); }
+      .hud-delta .lbl { margin-top: 6px; font: 500 21px/1.2 "Inter"; color: var(--text-soft); }
+
+      #hook { position: absolute; left: 0; right: 0; top: 560px; display: flex; justify-content: center; }
+      #hook p { margin: 0; max-width: 900px; text-align: center; font: 400 78px/1.12 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      .cap { position: absolute; left: 0; right: 0; top: 1110px; display: flex; justify-content: center; opacity: 0; }
+      .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+
+      #endcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 500px; box-sizing: border-box; gap: 26px; }
+      #endcard h2 { margin: 0 0 22px; max-width: 900px; text-align: center; opacity: 0; font: 500 80px/1.1 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      .pill { opacity: 0; padding: 14px 42px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.72); background: rgba(255, 255, 255, 0.1); font: italic 400 46px/1.2 "Newsreader"; color: var(--text); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); }
+      .pill.alt { border: 2px dashed #ff5a6a; background: rgba(255, 60, 80, 0.2); color: #ffdfe3; }
+      .cta { opacity: 0; margin-top: 40px; font: 600 23px/1 "Inter"; letter-spacing: 0.24em; color: rgba(255, 255, 255, 0.92); }
+      .arrow { display: block; width: 60px; height: 50px; opacity: 0; text-align: center; font: 500 44px/1 "Inter"; color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="60">
+      <div id="world" class="clip" data-start="0" data-duration="60" data-track-index="0">
+        <canvas id="three-layer" width="1080" height="1920"></canvas>
+      </div>
+
+      <div id="overlay" class="clip" data-start="0" data-duration="60" data-track-index="1">
+        <div id="vignette"></div>
+        <div id="cctv"><div class="lines"></div><div class="frame"></div><div class="rec"><span class="dot"></span>REC</div><div class="cam">KAMERA · JUWELENZIMMER</div></div>
+        <div id="dim"></div>
+
+        <div id="hud">
+          <div class="hud-tag">ECHTE RAUBZÜGE #1 · REKONSTRUKTION</div>
+          <div class="hud-label">BEUTE · VERSICHERUNGSWERT</div>
+          <div class="hud-num" id="hud-num">0 €</div>
+          <div class="hud-sub" id="hud-sub">DRESDEN · RESIDENZSCHLOSS</div>
+          <div class="hud-delta" data-in="5.05" data-out="6.95"><div class="amt">Tage vorher</div><div class="lbl">Fenstergitter präpariert</div></div>
+          <div class="hud-delta" data-in="13.45" data-out="15.70"><div class="amt">Stromkasten</div><div class="lbl">in Brand gesetzt</div></div>
+          <div class="hud-delta" data-in="16.45" data-out="18.00"><div class="amt">Straßenlaternen</div><div class="lbl">aus</div></div>
+          <div class="hud-delta" data-in="31.40" data-out="33.35"><div class="amt">04:59 Uhr</div><div class="lbl">Polizei alarmiert</div></div>
+          <div class="hud-delta" data-in="37.40" data-out="38.90"><div class="amt">61 Fahrzeuge</div><div class="lbl">in der Tiefgarage beschädigt</div></div>
+          <div class="hud-delta plus" data-in="41.35" data-out="43.70"><div class="amt">Nov. 2020</div><div class="lbl">Festnahmen in Berlin</div></div>
+          <div class="hud-delta plus" data-in="43.85" data-out="47.25"><div class="amt">Dez. 2022</div><div class="lbl">31 Einzelteile sichergestellt</div></div>
+          <div class="hud-delta plus" data-in="47.40" data-out="49.15"><div class="amt">Mai 2023</div><div class="lbl">5 Urteile · bis 6 J. 3 Mon. Haft</div></div>
+          <div class="hud-delta" data-in="51.40" data-out="54.50"><div class="amt">Fehlt bis heute</div><div class="lbl">„Sächsischer Weißer“ · fast 50 Karat</div></div>
+        </div>
+
+        <!-- CAPTIONS:START -->
+        <div id="hook" data-out="4.99"><p>Kurz vor 5 Uhr morgens verschwinden hier Juwelen für über 100 Millionen Euro.</p></div>
+        <div class="cap" id="cap-b2" data-in="4.99" data-out="7.02"><p>Der Plan beginnt Tage vorher.</p></div>
+        <div class="cap" id="cap-b3" data-in="7.02" data-out="10.79"><p>Die Täter sägen ein Fenstergitter durch … und setzen es wieder ein.</p></div>
+        <div class="cap" id="cap-b4" data-in="10.79" data-out="12.55"><p>Niemand merkt etwas.</p></div>
+        <div class="cap" id="cap-b5" data-in="12.55" data-out="15.76"><p>In der Tatnacht brennt an der Augustusbrücke ein Stromkasten.</p></div>
+        <div class="cap" id="cap-b6" data-in="15.76" data-out="18.09"><p>Rund ums Schloss gehen die Laternen aus.</p></div>
+        <div class="cap" id="cap-b7" data-in="18.09" data-out="21.03"><p>Zwei Männer steigen durchs Fenster ins Juwelenzimmer.</p></div>
+        <div class="cap" id="cap-b8" data-in="21.03" data-out="23.46"><p>Mit Äxten schlagen sie Löcher in die Vitrine.</p></div>
+        <div class="cap" id="cap-b9" data-in="23.46" data-out="27.39"><p>Sie erbeuten 21 Schmuckstücke mit 4.300 Diamanten.</p></div>
+        <div class="cap" id="cap-b10" data-in="27.39" data-out="31.29"><p>Der Wachdienst sieht alles auf den Kameras … und ruft die Polizei.</p></div>
+        <div class="cap" id="cap-b11" data-in="31.29" data-out="33.41"><p>04:59 Uhr.</p></div>
+        <div class="cap" id="cap-b12" data-in="33.41" data-out="36.17"><p>Zu spät. Die Täter sind schon wieder draußen.</p></div>
+        <div class="cap" id="cap-b13" data-in="36.17" data-out="38.95"><p>In einer Tiefgarage zünden sie ihr Fluchtauto an.</p></div>
+        <div class="cap" id="cap-b14" data-in="38.95" data-out="41.23"><p>Dann … sind sie verschwunden.</p></div>
+        <div class="cap" id="cap-b15" data-in="41.23" data-out="43.75"><p>Ein Jahr später: Festnahmen in Berlin.</p></div>
+        <div class="cap" id="cap-b16" data-in="43.75" data-out="47.30"><p>2022 taucht ein Großteil der Beute wieder auf.</p></div>
+        <div class="cap" id="cap-b17" data-in="47.30" data-out="49.20"><p>Fünf Männer werden verurteilt.</p></div>
+        <div class="cap" id="cap-b18" data-in="49.20" data-out="54.55"><p>Doch ein Diamant fehlt bis heute: der „Sächsische Weiße“. Fast 50 Karat.</p></div>
+        <!-- CAPTIONS:END -->
+
+        <div id="endcard">
+          <h2>Wo ist der „Sächsische Weiße“?</h2>
+          <div class="pill">Längst zerschnitten?</div>
+          <div class="pill">Ins Ausland verkauft?</div>
+          <div class="pill">Noch in Berlin versteckt?</div>
+          <div class="pill alt">… oder etwas ganz anderes?</div>
+          <div class="cta">SCHREIB DEINE THEORIE IN DIE KOMMENTARE</div>
+          <div class="arrow">↓</div>
+        </div>
+      </div>
+
+      <audio id="voiceover" src="./assets/audio/voiceover.wav" data-start="0" data-duration="60" data-track-index="2" data-volume="1"></audio>
+      <audio id="sounddesign" src="./assets/audio/sounddesign.wav" data-start="0" data-duration="60" data-track-index="3" data-volume="1"></audio>
+    </div>
+
+    <script id="cues" type="application/json">
+      {
+        "s2": 4.99, "s3": 7.02, "s4": 10.79, "s5": 12.54, "s6": 15.76, "s7": 18.09, "s8": 21.03, "s9": 23.46,
+        "s10": 27.39, "s11": 31.29, "s12": 33.41, "s13": 36.17, "s14": 38.94, "s15": 41.23, "s16": 43.75,
+        "s17": 47.30, "s18": 49.20, "s18b": 51.35, "end": 54.55,
+        "hudIn": 4.99, "gridCut": 7.64, "gridOut": 8.95, "gridBack": 9.6, "fireBox": 13.42, "lightsOut": 16.4,
+        "entry": 18.76, "hits": [21.78, 22.24, 22.78, 23.1], "grabStart": 24.1, "grabEnd": 26.9,
+        "police": 31.42, "tooLate": 33.52, "powder": 33.6, "garageFire": 37.34, "spread": 38.0,
+        "raid": 41.36, "fade": 53.6
+      }
+    </script>
+    <script>
+      const C = JSON.parse(document.getElementById("cues").textContent);
+      const tl = gsap.timeline({ paused: true });
+
+      const hook = document.getElementById("hook");
+      if (hook) tl.fromTo("#hook p", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, +hook.dataset.out - 0.3);
+
+      document.querySelectorAll(".cap").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, tIn);
+        tl.fromTo(el.firstElementChild, { y: 14 }, { y: 0, duration: 0.35, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.16, ease: "power1.in" }, tOut - 0.16);
+      });
+
+      tl.to("#hud", { opacity: 1, duration: 0.4, ease: "power1.out" }, C.hudIn);
+      document.querySelectorAll(".hud-delta").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        tl.fromTo(el, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.25 }, tOut - 0.25);
+      });
+
+      // Überwachungskamera: Graustufen, Zeilen, REC
+      tl.set("#three-layer", { filter: "grayscale(1) contrast(1.35) brightness(1.2)" }, C.s10);
+      tl.set("#three-layer", { filter: "none" }, C.s11);
+      tl.set("#cctv", { opacity: 1 }, C.s10);
+      tl.set("#cctv", { opacity: 0 }, C.s11);
+      tl.fromTo("#cctv .dot", { opacity: 1 }, { opacity: 0.15, duration: 0.5, repeat: 6, yoyo: true, ease: "steps(1)" }, C.s10);
+
+      // Endcard
+      tl.to("#dim", { opacity: 1, duration: 0.5, ease: "power1.out" }, C.end);
+      tl.to("#hud", { opacity: 0.35, duration: 0.5 }, C.end);
+      tl.fromTo("#endcard h2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C.end + 0.1);
+      tl.fromTo(".pill", { opacity: 0, y: 18, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", stagger: 0.28 }, C.end + 0.55);
+      tl.fromTo(".cta", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C.end + 1.85);
+      tl.fromTo(".arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 6, duration: 0.45, ease: "sine.inOut", repeat: 5, yoyo: true }, C.end + 1.95);
+
+      window.__timelines["main"] = tl;
+    </script>
+    <script type="module" src="./assets/scene.js"></script>
+  </body>
+</html>
