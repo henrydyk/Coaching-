@@ -3,6 +3,7 @@
 set -euo pipefail
 DIR="$(cd "${1:?Videoordner fehlt}" && pwd)"
 OUT="${2:-$DIR/renders/$(basename "$DIR" | sed 's/^[0-9]*-//').mp4}"
+case "$OUT" in /*) ;; *) OUT="$PWD/$OUT" ;; esac # absolut machen, bevor wir in den Videoordner wechseln
 if [ -z "${HYPERFRAMES_BROWSER_PATH:-}" ]; then
   for p in /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell; do
     [ -x "$p" ] && export HYPERFRAMES_BROWSER_PATH="$p"
