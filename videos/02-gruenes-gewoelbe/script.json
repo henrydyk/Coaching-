@@ -1,11 +1,11 @@
 {
   "title": "Der Juwelenraub im Grünen Gewölbe (Echte Raubzüge #1)",
   "engine": "chatterbox",
-  "exaggeration": 0.85,
-  "cfg": 0.3,
+  "exaggeration": 0.7,
+  "cfg": 0.45,
   "candidates": 3,
-  "max_pause": 0.22,
-  "tempo": 1.15,
+  "flow": 240,
+  "tempo": 1.08,
   "voice_fx": "cinematic",
   "lead_in": 0.25,
   "beats": [
@@ -14,7 +14,6 @@
       "role": "hook",
       "caption": "Zwei Männer. Eine Axt. 113 Millionen Euro.",
       "say": "Zwei Männer. Eine Axt. Hundertdreizehn Millionen Euro.",
-      "exaggeration": 0.95,
       "pause": 0.15
     },
     {
@@ -29,8 +28,8 @@
       "role": "caption",
       "caption": "Dresden. Alles beginnt Tage vorher.",
       "say": "Dresden. Alles beginnt Tage vorher.",
-      "exaggeration": 0.7,
-      "pause": 0.15
+      "pause": 0.15,
+      "break": true
     },
     {
       "id": "b4",
@@ -49,7 +48,6 @@
       "id": "b5",
       "role": "caption",
       "caption": "Niemand merkt etwas.",
-      "exaggeration": 0.7,
       "pause": 0.3
     },
     {
@@ -74,7 +72,6 @@
       "id": "b9",
       "role": "caption",
       "caption": "Mit Äxten schlagen sie Löcher in die Vitrine.",
-      "exaggeration": 0.95,
       "pause": 0.15
     },
     {
@@ -115,7 +112,6 @@
         },
         "Die Täter sind schon wieder draußen."
       ],
-      "exaggeration": 0.95,
       "pause": 0.15
     },
     {
@@ -129,15 +125,14 @@
       "role": "caption",
       "caption": "Dann … sind sie verschwunden.",
       "say": "Dann sind sie verschwunden.",
-      "exaggeration": 0.7,
-      "cfg": 0.25,
-      "pause": 0.45
+      "pause": 0.6
     },
     {
       "id": "b16",
       "role": "caption",
       "caption": "Ein Jahr später: Festnahmen in Berlin.",
-      "pause": 0.15
+      "pause": 0.15,
+      "break": true
     },
     {
       "id": "b17",
@@ -150,7 +145,7 @@
       "id": "b18",
       "role": "caption",
       "caption": "Fünf Männer werden verurteilt.",
-      "pause": 0.3
+      "pause": 0.35
     },
     {
       "id": "b19",
@@ -163,8 +158,8 @@
         },
         "Er fehlt bis heute."
       ],
-      "exaggeration": 0.95,
-      "pause": 0.3
+      "pause": 0.3,
+      "break": true
     },
     {
       "id": "b20",

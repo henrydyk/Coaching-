@@ -1,19 +1,66 @@
 {
   "title": "Mal angenommen … PRÄMISSE",
   "engine": "chatterbox",
-  "exaggeration": 0.85,
-  "cfg": 0.3,
+  "exaggeration": 0.7,
+  "cfg": 0.45,
   "candidates": 3,
+  "flow": 240,
+  "tempo": 1.08,
   "voice_fx": "cinematic",
   "lead_in": 0.35,
   "beats": [
-    { "id": "b1", "role": "hook", "caption": "Mal angenommen … PRÄMISSE.",
-      "say": [{ "text": "Mal angenommen …", "gap": 0.2 }, "PRÄMISSE."], "pause": 0.35 },
-    { "id": "b2", "role": "caption", "caption": "Aber es gibt einen Haken: REGEL.", "pause": 0.3 },
-    { "id": "b3", "role": "caption", "caption": "Action-Satz mit Zahl.", "say": "Action-Satz mit ausgeschriebener Zahl.", "exaggeration": 0.95, "pause": 0.25 },
-    { "id": "b4", "role": "caption", "caption": "Unheimlicher Satz … mit Enthüllung.",
-      "say": [{ "text": "Unheimlicher Satz …", "gap": 0.45 }, "mit Enthüllung."], "exaggeration": 0.7, "cfg": 0.25, "pause": 0.6 },
-    { "id": "b9", "role": "endcard", "caption": "Was würdest du tun? Schreib es in die Kommentare.",
-      "say": [{ "text": "Was würdest du tun?", "gap": 0.35 }, "Schreib es in die Kommentare."], "pause": 0.2 }
+    {
+      "id": "b1",
+      "role": "hook",
+      "caption": "Mal angenommen … PRÄMISSE.",
+      "say": [
+        {
+          "text": "Mal angenommen …",
+          "gap": 0.2
+        },
+        "PRÄMISSE."
+      ],
+      "pause": 0.35
+    },
+    {
+      "id": "b2",
+      "role": "caption",
+      "caption": "Aber es gibt einen Haken: REGEL.",
+      "pause": 0.3
+    },
+    {
+      "id": "b3",
+      "role": "caption",
+      "caption": "Action-Satz mit Zahl.",
+      "say": "Action-Satz mit ausgeschriebener Zahl.",
+      "pause": 0.25
+    },
+    {
+      "id": "b4",
+      "role": "caption",
+      "caption": "Unheimlicher Satz … mit Enthüllung.",
+      "say": [
+        {
+          "text": "Unheimlicher Satz …",
+          "gap": 0.45
+        },
+        "mit Enthüllung."
+      ],
+      "pause": 0.6,
+      "break": true
+    },
+    {
+      "id": "b9",
+      "role": "endcard",
+      "caption": "Was würdest du tun? Schreib es in die Kommentare.",
+      "say": [
+        {
+          "text": "Was würdest du tun?",
+          "gap": 0.35
+        },
+        "Schreib es in die Kommentare."
+      ],
+      "pause": 0.2
+    }
   ]
 }

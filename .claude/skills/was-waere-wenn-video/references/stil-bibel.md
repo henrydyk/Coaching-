@@ -87,25 +87,26 @@ sitzen auf den Satzanfängen aus `timing.json`, `captions.py` erledigt das.
 ## 4. Ton und Erzählweise
 
 **Stimme:** Standard ist `engine: "chatterbox"` mit der Stimmvorlage Thorsten (CC0,
-`assets/voices/thorsten-ref.wav`), `exaggeration` 0.85, `cfg` 0.3, `candidates` 2 und
-`voice_fx: "cinematic"` (Wärme, Präsenz, Kompression, kleiner Raum). Der Nutzer fand die
-Microsoft-Stimmen (Florian, Conrad) zu flach und langweilig. Thorsten "sehr emotional" ist seine Wahl.
-`engine: "edge"` mit `de-DE-FlorianMultilingualNeural` (`rate` +4 %, `pitch` −2 Hz) bleibt nur als
-schneller Entwurf, wenn keine Zeit für Chatterbox ist.
+`assets/voices/thorsten-ref.wav`), **ruhig und fließend**: `exaggeration` 0.7, `cfg` 0.45, `flow` 240,
+`tempo` 1.08, `candidates` 3, `voice_fx: "cinematic"`. So hat der Nutzer es gewählt.
 
-Regie-Werte für Chatterbox (pro Beat oder Segment):
-- `exaggeration` 0.95 für Hook, Gewalt und Twist ("Mit Äxten schlagen sie …", "Zu spät."),
-  0.85 für normale Erzählung, 0.7 für leise, unheimliche Sätze ("Niemand merkt etwas.").
-- `cfg` 0.3 als Standard, 0.25 für langsame, gedehnte Sätze ("Dann sind sie verschwunden.").
-  Höhere Werte (0.5) klingen ruhiger und nachrichtlicher.
-- Tempo steuerst du über Segmente, Lücken und Pausen, nicht über `rate` (das gilt nur bei edge).
-  Notfalls staucht `speed` (z. B. 1.06) einen Beat per `atempo`.
+Was der Nutzer abgelehnt hat und warum:
+- Microsoft-Stimmen (Florian, Conrad): zu flach und langweilig.
+- Thorsten „sehr emotional“ Satz für Satz (exaggeration 0.85–0.95, cfg 0.3, `max_pause`, `tempo` 1.15):
+  „abgehackt und nicht harmonisch“. Ursache: Jeder Satz wurde einzeln erzeugt, die Melodie fing an
+  jeder Fuge neu an, gekürzte Atempausen und 15 % Tempo machten es hektisch.
+- Lösung: Absätze am Stück sprechen lassen (`flow`), einheitliche Emotion, Pausen nur an echten
+  Wendepunkten über `"break": true` plus `pause` (z. B. vor dem Rückspulen, nach „Dann sind sie
+  verschwunden.“, vor dem Twist). Kein `max_pause`, nur sanftes `tempo` (≤ 1.08).
+- Wenn ein `ELEVENLABS_API_KEY` gesetzt ist und der Nutzer es will: deutsche Library-Stimme über
+  `engine: "elevenlabs"` (siehe Technik). Der Nutzer hatte bei Chatterbox auch einen leicht
+  englischen Akzent bemerkt.
 
 **Spannend erzählen statt vorlesen.** Der Nutzer will Spannung, deshalb bekommt jeder Beat eine Regie:
 - Teile Sätze in `say`-Segmente und setze **Pausen vor die Enthüllung**:
   `["Um drei Uhr nachts …" (gap 0.45), "klopft es an deiner Tür."]`.
-- Das Tempo folgt der Handlung: Action-Sätze mit hoher `exaggeration` und kurzen Lücken,
-  unheimliche Sätze mit niedriger `exaggeration`, kleinem `cfg` und langer Pause davor.
+- Spannung entsteht im Text und an den Absatzgrenzen: kurze Sätze, ein `"break": true` mit
+  `pause` 0.5–0.6 vor Enthüllungen. Emotion nicht pro Satz umschalten, das zerreißt den Fluss.
 - Stakkato in kurzen Segmenten mit kleinen Lücken (0,12–0,15 s): „Keine Polizei. | Kein Notruf. |
   Keine Strafe.“
 - Ein-Wort-Sätze als eigener Beat mit langer Pause davor („Drei Mal.“), Geräusch in die Pause legen
