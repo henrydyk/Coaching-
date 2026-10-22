@@ -40,7 +40,7 @@ C["frameShots"] = [[0, r(C["s1"] - 0.02)], [C["s4"], r(C["s5"] - 0.02)], [C["s9"
 DUR = r(max(T["total"] + 1.0, C["end"] + 3.6, 60.5))  # über 1 Minute (TikTok Creator Rewards)
 
 deltas = [(r(w("b3", "nur")), r(C["s3"] - 0.1)), (r(C["lightOn1"] + 0.1), r(C["s5"] + 1.2)),
-          (r(C["fireFlash"] + 0.15), r(C["s9"] - 0.1)), (r(C["someone"]), r(C["s14"] - 0.05)), (r(C["doorOpen"] + 0.2), r(C["end"] + 1.2))]
+          (r(C["fireFlash"] + 0.15), r(C["s9"] - 0.1)), (r(C["someone"]), r(C["s14"] - 0.05)), (r(C["doorOpen"] + 0.2), r(C["end"] - 0.05))]
 deltas = [(a, max(b, min(a + 1.9, (deltas[i + 1][0] - 0.2) if i + 1 < len(deltas) else b))) for i, (a, b) in enumerate(deltas)]
 
 html = open("index.html", encoding="utf-8").read()

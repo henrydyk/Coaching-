@@ -36,7 +36,7 @@ const ROOM = {
   top: "#000000", horizon: "#000000", bottom: "#000000", fog: "#04060a", fogNear: 12, fogFar: 40,
   sun: "#7f98ff", sunI: 0.35, hemiSky: "#2e3a58", hemiGround: "#0b0a0d", hemiI: 0.5, sunDir: [-0.7, 0.5, 0.2], sunGlow: 0,
 };
-const HALL = { ...ROOM, hemiI: 0.34, sunI: 0.12 };
+const HALL = { ...ROOM, hemiSky: "#4a5a80", hemiI: 0.95, sunI: 0.25, fog: "#05070c" };
 // [Startzeit, Stimmung, Himmel sichtbar?]
 const MOODS = [
   [0, NIGHT, true], [C.s1, DAY, true], [C.s3, ROOM, false], [C.s4, NIGHT, true], [C.s7, DAY, true],
@@ -127,7 +127,7 @@ for (let i = 0; i < 14; i++) {
   b.position.set(-8.5 - rand() * 3.2, 0.4, -4.2 + rand() * 8.4);
   street.add(b);
 }
-const boardMat = K.lambert("#5b4b3a");
+const boardMat = new THREE.MeshLambertMaterial({ color: "#2e261f" });
 for (let i = 0; i < 3; i++) {
   const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.16, 1.6), boardMat);
   b.position.set(boardWin.x + 0.06, boardWin.y - 0.35 + i * 0.35, boardWin.z);
@@ -205,6 +205,8 @@ const womanSkin = [];
 oldWoman.root.traverse((o) => { if (o.material && o.material.color && o.material.color.equals(SKIN)) womanSkin.push(o.material); });
 // die Gestalt im Vorgarten (nur auf dem Foto)
 const stranger = K.makeCharacter({ shirt: "#050506", pants: "#050506", skin: "#08080a", hair: "#050506", shoes: "#050506", hairStyle: "bald", scale: 1.04 });
+const voidMat = new THREE.MeshBasicMaterial({ color: "#030304" });
+stranger.root.traverse((o) => { if (o.isMesh) o.material = voidMat; }); // ganz schwarz, ohne Gesicht
 stranger.root.position.set(9.6, 0, -2.25);
 stranger.root.rotation.y = Math.PI / 2; // schaut zu deinem Haus
 street.add(stranger.root);
@@ -241,12 +243,16 @@ const closeTex = T(320, 330, (g, w, h) => { // Nacht 2: direkt an der Scheibe, H
   g.bezierCurveTo(w * 0.06, h * 0.7, w * 0.3, h * 0.62, w * 0.5, h * 0.62);
   g.bezierCurveTo(w * 0.7, h * 0.62, w * 0.94, h * 0.7, w * 0.98, h);
   g.closePath(); g.fill();
-  for (const sx of [0.16, 0.84]) {
-    g.beginPath(); g.ellipse(w * sx, h * 0.4, 26, 34, sx < 0.5 ? -0.2 : 0.2, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "#060507"; g.lineCap = "round";
+  for (const sx of [0.17, 0.83]) { // flache Hände an der Scheibe: Handfläche, vier Finger, Daumen
+    const cx = w * sx, cy = h * 0.46, d = sx < 0.5 ? 1 : -1;
+    g.beginPath(); g.ellipse(cx, cy, 24, 28, 0, 0, Math.PI * 2); g.fill();
+    g.lineWidth = 11;
     for (let f = 0; f < 4; f++) {
-      g.save(); g.translate(w * sx + (f - 1.5) * 11 * (sx < 0.5 ? 1 : -1), h * 0.4 - 30); g.rotate((f - 1.5) * 0.18);
-      g.fillRect(-4.5, -30, 9, 32); g.restore();
+      const fx = cx + (f - 1.5) * 12, a = (f - 1.5) * 0.12;
+      g.beginPath(); g.moveTo(fx, cy - 16); g.lineTo(fx + Math.sin(a) * 34, cy - 16 - Math.cos(a) * 34 + Math.abs(f - 1.5) * 5); g.stroke();
     }
+    g.beginPath(); g.moveTo(cx + d * 20, cy + 6); g.lineTo(cx + d * 40, cy - 12); g.stroke();
   }
 });
 const crossTex = T(320, 330, (g, w, h) => {
@@ -264,6 +270,10 @@ const layer = (tex, z) => {
   winGroup.add(m);
   return mat;
 };
+const dirtyMat = new THREE.MeshBasicMaterial({ color: "#23262b" });
+const dirty = new THREE.Mesh(new THREE.PlaneGeometry(WW, WH), dirtyMat);
+dirty.position.z = 0.005;
+winGroup.add(dirty); // verschmutzte, dunkle Scheibe, solange kein Licht brennt
 const roomMat = layer(roomTex, 0.01), silMat = layer(silTex, 0.02), closeMat = layer(closeTex, 0.022), crossMat = layer(crossTex, 0.04);
 const armPivot = new THREE.Group();
 armPivot.position.set(-0.17, -0.06, 0.025); // rechte Schulter der Gestalt (vom Betrachter aus links)
@@ -301,12 +311,17 @@ box(1.9, 0.18, 2.1, "#cfd3da", -0.9, 0.49, -1.2, bedroom);
 box(1.95, 0.12, 1.4, "#24324d", -0.9, 0.62, -0.75, bedroom);
 box(0.7, 0.16, 0.45, "#e6e8ec", -0.9, 0.66, -2.0, bedroom);
 box(0.55, 0.55, 0.45, "#3a2c24", 0.5, 0.28, -2.05, bedroom);
-const clockBody = box(0.3, 0.13, 0.12, "#101114", 0.48, 0.62, -2.0, bedroom);
+// Wecker als Gruppe, zur Kamera gedreht (sonst wirkt er schief und zerfällt in schwarze Flächen)
+const clockG = new THREE.Group();
+clockG.position.set(0.45, 0.62, -2.0);
+clockG.rotation.y = -0.55;
+bedroom.add(clockG);
+box(0.3, 0.13, 0.09, "#16171b", 0, 0, 0, clockG);
 const clockTex = ["03:16", "03:17"].map((text) => K.textTexture({ text, w: 512, h: 220, bg: "#050506", fg: "#ff2a1f", font: "700 170px Inter", spacing: "8px" }));
-const clockFace = plane(0.26, 0.105, new THREE.MeshBasicMaterial({ map: clockTex[0] }), 0.48, 0.62, -1.938, 0, bedroom);
-const clockGlow = K.makeGlow("#ff2a1f", 0.7);
-clockGlow.position.set(0.48, 0.62, -1.9);
-bedroom.add(clockGlow);
+const clockFace = plane(0.27, 0.11, new THREE.MeshBasicMaterial({ map: clockTex[0] }), 0, 0, 0.047, 0, clockG);
+const clockGlow = K.makeGlow("#ff2a1f", 0.55);
+clockGlow.position.set(0, 0, 0.12);
+clockG.add(clockGlow);
 // Fenster mit Mondlicht und Vorhängen
 plane(1.2, 1.3, new THREE.MeshBasicMaterial({ color: "#5d78b8" }), 2.34, 1.6, -0.6, -Math.PI / 2, bedroom);
 for (const dz of [-1.05, -0.15]) box(0.05, 1.9, 0.5, "#2a2433", 2.3, 1.55, dz, bedroom);
@@ -335,7 +350,7 @@ const doorPivot = new THREE.Group();
 doorPivot.position.set(0.52, 0, DOOR_Z);
 hall.add(doorPivot);
 const doorLeaf = box(1.04, 2.22, 0.07, "#4b3527", -0.52, 1.11, 0, doorPivot);
-plane(0.4, 0.5, new THREE.MeshBasicMaterial({ color: "#1d2a46" }), -0.52, 1.55, -0.04, Math.PI, doorPivot);
+plane(0.4, 0.5, new THREE.MeshBasicMaterial({ color: "#3d5a94" }), -0.52, 1.55, -0.04, Math.PI, doorPivot);
 const knob = box(0.07, 0.07, 0.1, "#b39b62", -0.92, 1.05, -0.06, doorPivot);
 const coldLight = new THREE.SpotLight("#9db6ff", 0, 16, 0.55, 0.7, 1.1);
 coldLight.position.set(HW.x, 2.3, HW.z + DOOR_Z + 1.6);
@@ -347,6 +362,7 @@ lightWedge.rotation.x = -Math.PI / 2;
 lightWedge.position.set(0, 0.05, DOOR_Z);
 hall.add(lightWedge);
 const doorway = K.makeCharacter({ shirt: "#040405", pants: "#040405", skin: "#060607", hair: "#040405", shoes: "#040405", hairStyle: "bald", scale: 1.04, castShadow: false });
+doorway.root.traverse((o) => { if (o.isMesh) o.material = voidMat; });
 doorway.root.position.set(0.05, 0, DOOR_Z + 0.22); // vor der Außenfläche, sonst verdeckt
 doorway.root.rotation.y = Math.PI; // schaut ins Haus
 hall.add(doorway.root);
@@ -364,7 +380,7 @@ const shots = [
   { t0: 0, t1: C.s1 - 0.02, from: { pos: EYE, tgt: [LIT[0], LIT[1] + 0.75, LIT[2]] }, to: { pos: EYE_NEAR, tgt: [LIT[0], LIT[1] + 0.7, LIT[2]] }, fov: 17 },
   { t0: C.s1, t1: C.s2 - 0.02, from: { pos: [-3.5, 2.0, -24], tgt: [12, 2.0, -3] }, to: { pos: [-2.5, 2.1, -21], tgt: [12, 2.3, -2] }, fov: 50 },
   { t0: C.s2, t1: C.s3 - 0.02, from: { pos: [3.8, 1.7, -5.5], tgt: [-14, 3.2, 0] }, to: { pos: [3.2, 1.7, -4.5], tgt: [-14, 3.4, 0] }, fov: 46 },
-  { t0: C.s3, t1: C.s4 - 0.02, from: { pos: at(BR, -0.2, 1.05, -0.6), tgt: at(BR, 0.48, 0.6, -2.0) }, to: { pos: at(BR, 0.25, 0.8, -1.45), tgt: at(BR, 0.48, 0.62, -2.0) }, fov: 42 },
+  { t0: C.s3, t1: C.s4 - 0.02, from: { pos: at(BR, -0.55, 1.15, -0.55), tgt: at(BR, 0.35, 0.62, -2.0) }, to: { pos: at(BR, -0.2, 0.95, -1.15), tgt: at(BR, 0.43, 0.62, -2.0) }, fov: 40 },
   { t0: C.s4, t1: C.s5 - 0.02, from: { pos: EYE, tgt: [LIT[0], LIT[1] - 0.6, LIT[2]] }, to: { pos: EYE_NEAR, tgt: [LIT[0], LIT[1] - 0.4, LIT[2]] }, fov: 30 },
   { t0: C.s5, t1: C.s6 - 0.02, from: { pos: EYE_NEAR, tgt: LIT }, to: { pos: EYE_NEAR, tgt: [LIT[0], LIT[1] + 0.03, LIT[2]] }, fov: 9 },
   { t0: C.s6, t1: C.s7 - 0.02, from: { pos: EYE_NEAR, tgt: LIT }, to: { pos: EYE_NEAR, tgt: LIT }, fov: 7.5 },
@@ -377,7 +393,7 @@ const shots = [
   { t0: C.s12, t1: C.s13 - 0.02, from: { pos: EYE_NEAR, tgt: [LIT[0], LIT[1] - 0.5, LIT[2]] }, to: { pos: EYE_NEAR, tgt: [LIT[0], LIT[1] - 0.2, LIT[2]] }, fov: 12 },
   // Foto: Schnitt nach unten in den Vorgarten, langsames Reinzoomen auf die Gestalt
   { t0: C.s13, t1: C.s14 - 0.02, from: { pos: EYE, tgt: [GARDEN[0] - 0.8, 0.7, GARDEN[2]] }, to: { pos: EYE_NEAR, tgt: [GARDEN[0] - 0.2, 1.1, GARDEN[2]] }, fov: 40 },
-  { t0: C.s14, t1: C.s15 - 0.02, from: { pos: EYE, tgt: [GARDEN[0] - 0.6, 0.7, GARDEN[2]] }, to: { pos: EYE, tgt: [GARDEN[0] - 1.6, 0.9, GARDEN[2]] }, fov: 50 },
+  { t0: C.s14, t1: C.s15 - 0.02, from: { pos: EYE_NEAR, tgt: [GARDEN[0] - 1.5, 0.6, GARDEN[2]] }, to: { pos: EYE_NEAR, tgt: [GARDEN[0] - 3.5, 1.1, GARDEN[2]] }, fov: 52 },
   { t0: C.s15, t1: C.end - 0.02, from: { pos: at(HW, 0, STEPS * STEP_H + 1.55, -0.55), tgt: at(HW, 0, 1.0, DOOR_Z) }, to: { pos: at(HW, 0, STEPS * STEP_H + 1.5, -0.2), tgt: at(HW, 0, 1.05, DOOR_Z) }, fov: 50 },
   { t0: C.end, t1: C.end + 8, from: { pos: at(HW, 0, STEPS * STEP_H + 1.5, -0.2), tgt: at(HW, 0, 1.05, DOOR_Z) }, to: { pos: at(HW, 0, STEPS * STEP_H + 1.45, 0.1), tgt: at(HW, 0, 1.05, DOOR_Z) }, fov: 50 },
 ];
@@ -418,6 +434,7 @@ function updateWorld(t) {
   if (night1) lit = K.ramp(t, C.lightOn1, C.lightOn1 + 0.25) * (0.85 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7));
   if (night2) lit = K.ramp(t, C.lightOn2, C.lightOn2 + 0.25);
   roomMat.opacity = lit;
+  dirty.visible = lit < 0.02;
   winGlow.material.opacity = lit * 0.55;
   winLight.intensity = lit * 9;
   const far = hook || (night1 && t >= C.s5);
@@ -429,7 +446,7 @@ function updateWorld(t) {
   let raise = 0, wave = 0;
   if (hook) { raise = 1; wave = 1; }
   if (night1) { raise = K.ramp(t, C.handUp, C.handUp + 1.3); wave = K.ramp(t, C.wave - 0.1, C.wave + 0.3); }
-  armMat.opacity = far ? lit : 0;
+  armMat.opacity = far && raise > 0.03 ? lit : 0; // hängend läge er außerhalb der Silhouette
   armPivot.rotation.z = -(0.08 + raise * (Math.PI - 0.55)) + wave * Math.sin(t * 7) * 0.32;
   fires.forEach((f, i) => f.update(t, fire ? K.ramp(t, C.fireFlash + i * 0.15, C.fireFlash + 0.6 + i * 0.15) : 0));
   smoke.update(t, fire ? 1 : 0);
