@@ -188,7 +188,11 @@ def synth_adaptive(segs, cfg, cache, generate, label):
             txt = " ".join(seg.text for seg in segs_)
             spoken = re.sub(r"\[[^\]]*\]", " ", s["text"])  # ElevenLabs-Audio-Tags wie [whispers] werden nicht gesprochen
             score = difflib.SequenceMatcher(None, norm_words(txt), norm_words(spoken)).ratio()
-            s["scored"][k] = (score, len(a) / 16000, c, txt.strip())
+            # In langen Absätzen fällt ein falsches Wort im Verhältnis kaum auf ("Dresden" -> "8", "Wachdienst" ->
+            # "Waschdienst"). Deshalb kostet jedes nicht erkannte Wort ab 5 Buchstaben 0,1 Punkte.
+            heard = set(norm_words(txt))
+            missing = [w for w in norm_words(spoken) if len(w) >= 5 and w not in heard]
+            s["scored"][k] = (score - 0.1 * len(missing), len(a) / 16000, c, txt.strip() + (f"  [fehlt: {', '.join(missing)}]" if missing else ""))
 
     def best(s):  # beste Übereinstimmung, bei Gleichstand die kürzere Aufnahme
         return max(s["scored"].values(), key=lambda v: (round(v[0], 3), -v[1]))
