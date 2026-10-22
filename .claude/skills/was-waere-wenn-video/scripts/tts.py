@@ -15,6 +15,9 @@ Engines ("engine" in script.json):
   "similarity", "el_speed"), Schlüssel aus ELEVENLABS_API_KEY. Gleiche Whisper-Qualitätsschleife.
 - "edge": Microsoft-Neural-Stimmen über edge-tts ("voice", "rate", "pitch", "volume").
 
+Harmonischer Fluss: "flow": 240 lässt mehrere Sätze am Stück sprechen (Absätze bis 240 Zeichen, neuer
+Absatz bei Emotionswechsel, "break": true oder Endcard). Satzzeiten kommen dann aus Whisper-Wortzeiten.
+
 Länge ohne Neugenerieren anpassen: "max_pause" (Sekunden, global/Beat/Segment) kürzt Pausen innerhalb
 der Aufnahmen, "tempo" (z. B. 1.1) beschleunigt das ganze Voiceover, "pause"/"gap" steuern die Stille
 zwischen Sätzen. Alle drei wirken nur beim Zusammensetzen, der Cache bleibt gültig.
@@ -105,6 +108,40 @@ def norm_words(s):
     return re.sub(r"[^a-zäöüß ]", " ", s).split()
 
 
+def align_beats(path, texts, cfg, state):
+    """Start/Ende jedes Satzes innerhalb einer Absatz-Aufnahme per Whisper-Wortzeiten (gecacht)."""
+    cache_json = path[:-4] + ".words.json"
+    if os.path.exists(cache_json):
+        words = json.load(open(cache_json, encoding="utf-8"))
+    else:
+        import numpy as np
+        from faster_whisper import WhisperModel
+        if "asr" not in state:
+            state["asr"] = WhisperModel(cfg.get("asr_model", "medium"), device="cpu", compute_type="int8")
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
+                             stdin=subprocess.DEVNULL, capture_output=True, check=True).stdout
+        a = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
+        segs_, _ = state["asr"].transcribe(a, language="de", word_timestamps=True)
+        words = [{"w": w.word, "start": w.start, "end": w.end} for sg in segs_ for w in sg.words]
+        json.dump(words, open(cache_json, "w", encoding="utf-8"), ensure_ascii=False)
+    rec = [(nw, w["start"], w["end"]) for w in words for nw in norm_words(w["w"])]
+    exp = [(nw, i) for i, tx in enumerate(texts) for nw in norm_words(re.sub(r"\[[^\]]*\]", " ", tx))]
+    sm = difflib.SequenceMatcher(None, [e[0] for e in exp], [r[0] for r in rec], autojunk=False)
+    hit = {a + k: b + k for a, b, n in sm.get_matching_blocks() for k in range(n)}
+    res = []
+    for i in range(len(texts)):
+        idx = [k for k, e in enumerate(exp) if e[1] == i and k in hit]
+        res.append([rec[hit[idx[0]]][1], rec[hit[idx[-1]]][2]] if idx else None)
+    dur = wav_duration(path)
+    for i, r in enumerate(res):  # Sätze ohne erkannte Wörter zwischen die Nachbarn legen
+        if r is None:
+            prev_end = res[i - 1][1] if i and res[i - 1] else 0.0
+            res[i] = [prev_end, next((x[0] for x in res[i + 1:] if x), dur)]
+    res[0][0] = 0.0
+    res[-1][1] = max(res[-1][1], dur - 0.05)
+    return res
+
+
 # ---------- Engines ----------
 def synth_edge(segs):
     import certifi
@@ -176,7 +213,7 @@ def synth_adaptive(segs, cfg, cache, generate, label):
         b = best(s)
         flag = "" if b[0] >= 0.85 else "  <-- prüfen!"
         print(f"  {b[0]:.2f} ({len(s['scored'])}x) {s['text'][:50]!r} -> {b[3][:60]!r}{flag}")
-        af = TRIM.format(db=-45)
+        af = TRIM.format(db=-45) + ",afade=t=in:d=0.012,areverse,afade=t=in:d=0.04,areverse"  # weiche Kanten
         if s["speed"] != 1.0:
             af += f",atempo={s['speed']}"
         run(["ffmpeg", "-y", "-i", b[2], "-af", af, "-ac", "1", "-ar", str(SR), s["wav"]])
@@ -278,7 +315,32 @@ def main(video_dir):
             s["wav"] = os.path.join(cache, s["key"] + ".wav")
             segs.append(s)
         plan.append((beat, segs))
-    all_segs = [s for _, segs in plan for s in segs]
+    # "flow": mehrere Sätze am Stück sprechen lassen (Zeichen pro Absatz, z. B. 240). Klingt harmonischer als
+    # Satz für Satz: Melodie und Atem laufen durch. Ein neuer Absatz beginnt bei Emotionswechsel (> 0.15),
+    # bei "break": true und vor der Endcard.
+    units = [{"beats": [beat], "segs": segs, "flow": False} for beat, segs in plan]
+    flow = cfg.get("flow")
+    if flow:
+        limit = 240 if flow is True else int(flow)
+        units, cur = [], None
+        for beat, segs in plan:
+            text = " ".join(x["text"] for x in segs)
+            new = (cur is None or beat.get("break") or beat.get("role") == "endcard"
+                   or abs(segs[0]["ex"] - cur["seg"]["ex"]) > 0.15 or len(cur["seg"]["text"]) + len(text) > limit)
+            if new:
+                cur = {"beats": [], "seg": dict(segs[0], text=""), "texts": [], "flow": True}
+                units.append(cur)
+            cur["beats"].append(beat)
+            cur["texts"].append(text)
+            cur["seg"]["text"] = " ".join(cur["texts"])
+        for u in units:
+            sg = u["seg"]
+            sig = f"{engine}|{cfg.get('voice_ref', 'thorsten')}|{cfg.get('voice_id')}|{sg['ex']}|{sg['cfg']}|{sg['stability']}|{sg['speed']}"
+            sg["key"] = f"flow-{u['beats'][0]['id']}-" + hashlib.sha1(f"{sig}|{sg['text']}".encode()).hexdigest()[:12]
+            sg["wav"] = os.path.join(cache, sg["key"] + ".wav")
+            u["segs"] = [sg]
+        print(f"Flow: {len(plan)} Sätze in {len(units)} Absätzen", flush=True)
+    all_segs = [s for u in units for s in u["segs"]]
 
     # 2) Synthese
     for i, s in enumerate(all_segs):  # Nachbartext hilft ElevenLabs bei Betonung und Übergängen
@@ -293,22 +355,35 @@ def main(video_dir):
 
     # 3) Zusammensetzen + Timing
     t = float(cfg.get("lead_in", 0.3))
-    parts, timing = [silence(cache, t)], []
-    for beat, segs in plan:
-        beat_start = t
-        for j, s in enumerate(segs):
-            src = s["wav"]
-            if s["max_pause"]:  # lange Atem-/Denkpausen kürzen, ohne neu zu generieren
-                src = s["wav"][:-4] + f"-p{int(float(s['max_pause']) * 1000)}.wav"
-                if not os.path.exists(src):
-                    cap_pauses(s["wav"], src, float(s["max_pause"]))
+    parts, timing, state = [silence(cache, t)], [], {}
+
+    def shaped(s):
+        if not s["max_pause"]:
+            return s["wav"]
+        src = s["wav"][:-4] + f"-p{int(float(s['max_pause']) * 1000)}.wav"  # lange Pausen kürzen, ohne neu zu generieren
+        if not os.path.exists(src):
+            cap_pauses(s["wav"], src, float(s["max_pause"]))
+        return src
+
+    for u in units:
+        if u["flow"]:
+            src = shaped(u["segs"][0])
+            for beat, (b0, b1) in zip(u["beats"], align_beats(src, u["texts"], cfg, state)):
+                timing.append({"id": beat["id"], "caption": beat["caption"], "start": round(t + b0, 3), "end": round(t + b1, 3)})
             parts.append(src)
             t += wav_duration(src)
-            if j < len(segs) - 1:
-                parts.append(silence(cache, s["gap"]))
-                t += s["gap"]
-        timing.append({"id": beat["id"], "caption": beat["caption"], "start": round(beat_start, 3), "end": round(t, 3)})
-        pause = float(beat.get("pause", 0.25))
+        else:
+            beat, segs = u["beats"][0], u["segs"]
+            beat_start = t
+            for j, s in enumerate(segs):
+                src = shaped(s)
+                parts.append(src)
+                t += wav_duration(src)
+                if j < len(segs) - 1:
+                    parts.append(silence(cache, s["gap"]))
+                    t += s["gap"]
+            timing.append({"id": beat["id"], "caption": beat["caption"], "start": round(beat_start, 3), "end": round(t, 3)})
+        pause = float(u["beats"][-1].get("pause", 0.25))
         parts.append(silence(cache, pause))
         t += pause
 

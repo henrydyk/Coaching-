@@ -17,8 +17,11 @@ from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 MODEL = None
 
 
+THREADS = 1
+
+
 def init():
-    torch.set_num_threads(1)
+    torch.set_num_threads(THREADS)
 
 
 def synth(it):
@@ -37,11 +40,15 @@ def main():
     todo = [it for it in job["items"] if not os.path.exists(it["out"])]
     if not todo:
         return
+    global THREADS
     procs = int(sys.argv[2]) if len(sys.argv) > 2 else min(len(todo), os.cpu_count() or 1)
+    # Eine einzelne Aufnahme rechnet mit allen Kernen. Mehrere laufen per fork mit je 1 Thread:
+    # fork + mehrere OpenMP-Threads pro Kind blockiert (gemessen: Kinder hingen bei 0 % CPU).
+    THREADS = (os.cpu_count() or 1) if procs <= 1 else 1
     t0 = time.time()
     MODEL = ChatterboxMultilingualTTS.from_pretrained(device="cpu")
     MODEL.prepare_conditionals(job["ref"], exaggeration=todo[0]["ex"])
-    print(f"Modell bereit in {time.time() - t0:.0f} s, {len(todo)} Segmente auf {procs} Prozessen", flush=True)
+    print(f"Modell bereit in {time.time() - t0:.0f} s, {len(todo)} Segmente auf {procs} Prozessen à {THREADS} Threads", flush=True)
     todo.sort(key=lambda it: -len(it["text"]))  # lange zuerst, damit am Ende kein Prozess allein rechnet
     if procs <= 1:
         init()
