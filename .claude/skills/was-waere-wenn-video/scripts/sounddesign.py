@@ -12,7 +12,7 @@ sound.json:
 }
 Event-Typen: impact, whoosh, powerdown, siren, shutters, glass, crackle, ticks, heartbeat,
              birds, pop, riser, cash, knock, ignite, whoomp, steps, grinder, clink, zap, alarm,
-             martinshorn, hum. "t" darf auch eine Liste sein.
+             martinshorn, hum, rewind (Rückspul-Effekt für Rückblenden). "t" darf auch eine Liste sein.
 Klangteppich-Stimmungen: dusk, night, tension, dawn, wonder, noir (Raubzug).
 Optional: "bed_gain": [[t, dB], ...] als Lautstärke-Automation des Klangteppichs.
 """
@@ -123,6 +123,18 @@ def whoosh(dur=0.5):
     lo = lp(n, 700) * env
     hi = bp(n, 1500, 6000) * env ** 3
     return norm(fade(lo + 0.5 * hi, 0.01, 0.2))
+
+
+def rewind(dur=0.7):
+    """Bandrücklauf: schnell steigendes Zirpen mit Flattern, endet in einem kurzen Stopp-Klick."""
+    t = secs(dur)
+    f = 180 * 2 ** (t / dur * 4)
+    flutter = 1 + 0.5 * np.sign(np.sin(2 * np.pi * (14 + 30 * t / dur) * t))
+    tone = signal.sawtooth(2 * np.pi * np.cumsum(f) / SR) * 0.35
+    hiss = bp(RNG.standard_normal(len(t)), 1200, 7000) * 0.5
+    x = (tone + hiss) * flutter * (0.3 + 0.7 * (t / dur))
+    stop = hp(RNG.standard_normal(int(0.04 * SR)), 1500) * np.exp(-secs(0.04) * 120)
+    return norm(fade(np.concatenate([lp(x, 6000), stop]), 0.02, 0.01))
 
 
 def powerdown():
@@ -327,6 +339,8 @@ def make_event(ev):
         return impact(ev.get("variant", "hard"))
     if k == "whoosh":
         return whoosh(ev.get("dur", 0.5))
+    if k == "rewind":
+        return rewind(ev.get("dur", 0.7))
     if k == "powerdown":
         return powerdown()
     if k == "siren":

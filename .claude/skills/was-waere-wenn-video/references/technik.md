@@ -15,7 +15,31 @@ export HYPERFRAMES_BROWSER_PATH=$(ls /opt/pw-browsers/chromium_headless_shell-*/
   automatisch. Ohne sie meldet `doctor` "Chrome Headless Shell is required".
 - Der Session-Proxy terminiert TLS neu. `edge-tts` nutzt hart `certifi`, deshalb biegt `tts.py`
   `certifi.where()` auf `/root/.ccr/ca-bundle.crt` um. TLS-Prüfung niemals abschalten.
-- Die eingebaute HyperFrames-TTS (Kokoro) kann **kein Deutsch**. Deshalb nutzen wir edge-tts.
+- Die eingebaute HyperFrames-TTS (Kokoro) kann **kein Deutsch**. Deshalb nutzen wir Chatterbox
+  (Standard) bzw. edge-tts (schneller Entwurf).
+
+## Stimme: Chatterbox (Standard)
+
+```bash
+bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh   # einmal pro Container, ca. 5 min
+```
+
+- Das legt `.venv-chatterbox/` an (torch CPU + `chatterbox-tts`, MIT). Beim ersten Lauf lädt der
+  Worker das Modell von HuggingFace (ca. 3 GB).
+- `tts.py` startet `scripts/chatterbox_worker.py` einmal für alle fehlenden Segmente. Das kostet ca.
+  30 s CPU pro Segment und Kandidat, ein 60-s-Skript mit 2 Kandidaten also ca. 25–30 min. Starte es im
+  Hintergrund und baue in der Zeit an der Szene.
+- Fertige Segmente liegen in `.tts-cache/` (Schlüssel aus Text und Regie). Ändere einen Satz, wird nur
+  dieser neu erzeugt.
+- Bei hoher `exaggeration` erfindet Chatterbox manchmal Silben am Satzende oder verschluckt Wörter.
+  Deshalb erzeugt `tts.py` pro Segment `candidates` Varianten (Seeds) und lässt Whisper (`asr_model`,
+  Standard `medium`) die Variante wählen, deren Transkript am besten zum Text passt. Werte unter 0.85
+  markiert das Skript mit `<-- prüfen!`. Dann hörst du das Segment an, formulierst um oder erhöhst
+  `candidates`.
+- Die Stimmvorlage (`voice_ref`) ist eine 10–15 s lange, saubere Aufnahme. Thorsten-Voice ist CC0 und
+  darf kommerziell genutzt werden. Klone nie die Stimme einer realen Person ohne deren Erlaubnis.
+- Wortzeitstempel für die Cues: `python3 -I .claude/skills/was-waere-wenn-video/scripts/words.py videos/NN-slug`
+  (schreibt `words.json`).
 - Wortzeitstempel für Cues bekommst du per Whisper. Das Modell "small" lädt beim ersten Mal von
   HuggingFace:
 

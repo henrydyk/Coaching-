@@ -46,6 +46,7 @@
       /* Hook und Untertitel: Serif, Untertitel kursiv */
       #hook { position: absolute; left: 0; right: 0; top: 560px; display: flex; justify-content: center; }
       #hook p { margin: 0; max-width: 900px; text-align: center; font: 400 80px/1.12 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      #hook .hk { display: inline-block; transform-origin: 50% 60%; }
       .cap { position: absolute; left: 0; right: 0; top: 1110px; display: flex; justify-content: center; opacity: 0; }
       .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
 
@@ -105,6 +106,10 @@
       // Hook ist ab Frame 0 sichtbar (Thumbnail!) und geht, wenn der zweite Satz kommt
       const hook = document.getElementById("hook");
       tl.fromTo("#hook p", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, +hook.dataset.out - 0.3);
+      // Punch je Hook-Teil, wenn er gesprochen wird (Cue "hookParts")
+      if (C.hookParts) hook.querySelectorAll(".hk").forEach((el, i) => {
+        if (C.hookParts[i] !== undefined) tl.fromTo(el, { scale: 1 }, { scale: 1.1, duration: 0.08, ease: "power2.out", yoyo: true, repeat: 1 }, C.hookParts[i]);
+      });
 
       document.querySelectorAll(".cap").forEach((el) => {
         const tIn = +el.dataset.in, tOut = +el.dataset.out;

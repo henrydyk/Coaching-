@@ -40,13 +40,15 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
 2. **Projekt anlegen:** `bash .claude/skills/was-waere-wenn-video/scripts/new_video.sh <slug>`. Das
    kopiert die Vorlage, three.js, GSAP und die Schriften.
 3. **Voiceover:** `python3 -I .claude/skills/was-waere-wenn-video/scripts/tts.py videos/NN-slug`.
-   Das erzeugt `assets/audio/voiceover.wav` (−16 LUFS) und `timing.json` mit Start/Ende je Beat. Ist
-   die Länge falsch, kürzt du den Text (Kommas statt Punkte sparen Pausen) oder änderst `rate`.
-   Laufe nicht weiter, bevor die Länge passt.
+   Standard ist Chatterbox mit der Stimme Thorsten, sehr emotional (einmal pro Container vorher
+   `scripts/setup_chatterbox.sh`; ca. 25–30 min für 60 s, im Hintergrund laufen lassen). Das erzeugt
+   `assets/audio/voiceover.wav` (−16 LUFS) und `timing.json` mit Start/Ende je Beat. Prüfe die mit
+   `<-- prüfen!` markierten Segmente. Ist die Länge falsch, kürzt du Text und Pausen oder setzt
+   `speed`. Laufe nicht weiter, bevor die Länge passt.
 4. **Untertitel einsetzen:** `python3 -I .claude/skills/was-waere-wenn-video/scripts/captions.py videos/NN-slug`.
    Das schreibt den Hook und die Untertitel aus `timing.json` in `index.html`.
-5. **Cues und Szene:** Leite die Sync-Punkte (`#cues` in `index.html`) aus den Wortzeiten ab. Dazu
-   transkribierst du das Voiceover mit Wortzeitstempeln, siehe `references/technik.md`. Baue die Welt
+5. **Cues und Szene:** Leite die Sync-Punkte (`#cues` in `index.html`) aus den Wortzeiten ab:
+   `python3 -I .claude/skills/was-waere-wenn-video/scripts/words.py videos/NN-slug`. Baue die Welt
    in `assets/scene.js` mit `assets/lowpoly-kit.js`: Stimmungs-Keyframes, Objekte, `CameraRig`-Shots
    (ein Shot pro Beat, Schnitt auf dem Untertitelwechsel). HUD-Zähler und Delta-Zeilen gehören dazu.
 6. **Sounddesign:** Erstelle `sound.json` (Klangteppich-Stimmungen und Effekte auf den Cues) und
@@ -89,7 +91,9 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
 | `template/index.html` | Komposition 1080x1920: Canvas, HUD, Untertitel-Marker, Endcard, GSAP-Timeline |
 | `template/assets/lowpoly-kit.js` | Himmel-Shader, Stimmungs-Keyframes, instanzierte Häuser mit Fenstern/Rollläden, Bäume, **Menschen mit Gelenken** (`makeCharacter` + `animateCharacter`: gehen, rennen, ducken, klopfen, winken, Fackel/Taschenlampe halten, Axthieb `chop`, Greifen `reach`; Purge-Maske, Kapuze, Frisuren), `pathAt` für Laufwege, Drehkörper `lathe` (Kuppeln, Turmhauben), `makeBrilliant`, `makeJewel`, Feuer, Rauch, Glow-Sprites, Schild-Texturen, `CameraRig`, deutsche Zahlformate |
 | `template/assets/scene.js` | Startgerüst einer Szene |
-| `scripts/tts.py` | edge-tts (Standard `de-DE-FlorianMultilingualNeural` + `voice_fx: cinematic`), Regie pro Beat/Segment (rate, pitch, volume, Pausen), Stille getrimmt, LUFS-normalisiert |
+| `scripts/tts.py` | Chatterbox (Standard: Thorsten, `exaggeration`/`cfg` pro Beat/Segment, Kandidaten mit Whisper-Auswahl) oder edge-tts; `voice_fx: cinematic`, Pausen, Stille getrimmt, LUFS-normalisiert |
+| `scripts/words.py` | Wortzeitstempel des Voiceovers (Whisper) für Cues |
+| `assets/voices/` | Stimmvorlagen (Thorsten, CC0) |
 | `scripts/captions.py` | Hook und Untertitel aus `timing.json` in `index.html` schreiben |
 | `scripts/sounddesign.py` | synthetischer Klangteppich (dusk/night/tension/dawn/wonder) mit Lautstärke-Automation (`bed_gain`) plus Effekte (u. a. Sirene, Glas, Klopfen, Zünden, Feuer-Wumms, Schritte, Herzschlag), Ducking unter der Stimme |
 | `scripts/new_video.sh`, `scripts/render.sh` | Projekt anlegen bzw. prüfen, rendern, Lautheit messen |

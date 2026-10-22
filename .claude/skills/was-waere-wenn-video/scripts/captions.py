@@ -4,6 +4,8 @@ Aufruf: python3 -I captions.py <video-ordner>
 Ersetzt alles zwischen <!-- CAPTIONS:START --> und <!-- CAPTIONS:END -->.
 Rollen aus script.json: "hook" (großer Einstiegssatz), "caption" (kursive Untertitel),
 "endcard" (wird nicht als Untertitel gezeigt, die Endcard übernimmt).
+Der Hook wird in Satzteile (<span class="hk">) zerlegt. Mit dem Cue "hookParts" (Startzeit je Teil)
+bekommt jeder Teil einen kurzen Punch, wenn er gesprochen wird. Sichtbar ist der Hook ab Frame 0 komplett.
 """
 import html, json, os, re, sys
 
@@ -22,6 +24,8 @@ def main(video_dir):
         t_in = 0.0 if role == "hook" else max(0.0, b["start"] - LEAD)
         text = html.escape(b["caption"])
         if role == "hook":
+            parts = re.split(r"(?<=[.!?…])\s+", b["caption"].strip())
+            text = " ".join(f'<span class="hk">{html.escape(x)}</span>' for x in parts)
             lines.append(f'<div id="hook" data-out="{nxt:.2f}"><p>{text}</p></div>')
         elif role == "caption":
             lines.append(f'<div class="cap" id="cap-{b["id"]}" data-in="{t_in:.2f}" data-out="{nxt:.2f}"><p>{text}</p></div>')

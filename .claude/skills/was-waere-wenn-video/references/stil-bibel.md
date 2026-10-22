@@ -86,16 +86,26 @@ sitzen auf den Satzanfängen aus `timing.json`, `captions.py` erledigt das.
 
 ## 4. Ton und Erzählweise
 
-**Stimme:** Standard ist `de-DE-FlorianMultilingualNeural` mit `voice_fx: "cinematic"` (Wärme,
-Präsenz, Kompression, kleiner Raum), `rate` +4 %, `pitch` −2 Hz. Florian liegt mit ca. 126 Hz nah am
-Erzähler der Bunker-Referenz (129 Hz) und klingt erzählerischer als `de-DE-ConradNeural`, der ruhig
-und eher nachrichtlich wirkt. Conrad ist die Alternative für ruhige oder dokumentarische Themen.
+**Stimme:** Standard ist `engine: "chatterbox"` mit der Stimmvorlage Thorsten (CC0,
+`assets/voices/thorsten-ref.wav`), `exaggeration` 0.85, `cfg` 0.3, `candidates` 2 und
+`voice_fx: "cinematic"` (Wärme, Präsenz, Kompression, kleiner Raum). Der Nutzer fand die
+Microsoft-Stimmen (Florian, Conrad) zu flach und langweilig. Thorsten "sehr emotional" ist seine Wahl.
+`engine: "edge"` mit `de-DE-FlorianMultilingualNeural` (`rate` +4 %, `pitch` −2 Hz) bleibt nur als
+schneller Entwurf, wenn keine Zeit für Chatterbox ist.
+
+Regie-Werte für Chatterbox (pro Beat oder Segment):
+- `exaggeration` 0.95 für Hook, Gewalt und Twist ("Mit Äxten schlagen sie …", "Zu spät."),
+  0.85 für normale Erzählung, 0.7 für leise, unheimliche Sätze ("Niemand merkt etwas.").
+- `cfg` 0.3 als Standard, 0.25 für langsame, gedehnte Sätze ("Dann sind sie verschwunden.").
+  Höhere Werte (0.5) klingen ruhiger und nachrichtlicher.
+- Tempo steuerst du über Segmente, Lücken und Pausen, nicht über `rate` (das gilt nur bei edge).
+  Notfalls staucht `speed` (z. B. 1.06) einen Beat per `atempo`.
 
 **Spannend erzählen statt vorlesen.** Der Nutzer will Spannung, deshalb bekommt jeder Beat eine Regie:
 - Teile Sätze in `say`-Segmente und setze **Pausen vor die Enthüllung**:
   `["Um drei Uhr nachts …" (gap 0.45), "klopft es an deiner Tür."]`.
-- Das Tempo folgt der Handlung: Action-Sätze schnell (`rate` +10 bis +14 %), unheimliche Sätze
-  langsam und tiefer (`rate` −8 bis −14 %, `pitch` −4 Hz), Flüster-Momente leiser (`volume` −10 %).
+- Das Tempo folgt der Handlung: Action-Sätze mit hoher `exaggeration` und kurzen Lücken,
+  unheimliche Sätze mit niedriger `exaggeration`, kleinem `cfg` und langer Pause davor.
 - Stakkato in kurzen Segmenten mit kleinen Lücken (0,12–0,15 s): „Keine Polizei. | Kein Notruf. |
   Keine Strafe.“
 - Ein-Wort-Sätze als eigener Beat mit langer Pause davor („Drei Mal.“), Geräusch in die Pause legen
@@ -153,8 +163,10 @@ Privatpersonen nennen, keine Verherrlichung. Die Täter sind gesichtslos (Kapuze
 
 | Phase | Inhalt | Bild |
 |---|---|---|
-| Hook | Ort, Uhrzeit, Beutesumme in einem Satz | Stadt-Silhouette bei Nacht, Wahrzeichen |
-| Plan | „Der Plan beginnt Tage vorher.“ und die Vorbereitung | Tageslicht vs. Nacht, Nahaufnahme der Vorbereitung |
+| Hook (0–3 s) | **Flash-Forward:** der Höhepunkt zuerst, in Stakkato: „Zwei Männer. Eine Axt. 113 Millionen Euro.“ | der Tat-Moment in Zeitlupe (Axthieb, Splitter), Zähler rast auf die Beutesumme |
+| Haken (3–6 s) | das offene Rätsel vorziehen: „Und ein Diamant … ist bis heute verschwunden.“ | das fehlende Objekt allein im Dunkeln |
+| Rückspulen | „Dresden. Alles beginnt Tage vorher.“ | weißer Blitz + `rewind`-Sound, Zähler springt auf 0, Stadt am Tag |
+| Plan | die Vorbereitung | Tageslicht vs. Nacht, Nahaufnahme der Vorbereitung |
 | Ablenkung | Strom aus, Licht aus, Alarm umgangen | Feuer, Funken, Laternen gehen in einer Welle aus |
 | Einstieg | Wie sie reinkommen | Figuren mit Taschenlampen-Kegeln |
 | Tat | Werkzeug, Treffer, Beute-Zähler läuft hoch | Innenraum, Vitrine, Splitter, Alarmlicht |
@@ -164,6 +176,12 @@ Privatpersonen nennen, keine Verherrlichung. Die Täter sind gesichtslos (Kapuze
 | Ermittlung | Jahre als Zeitsprünge | Razzia, Asservaten, Gericht |
 | Offenes Ende | Was fehlt bis heute | ein einzelnes Objekt im Dunkeln |
 | Endcard | „Wo ist …?“ und Theorien-Pills, „SCHREIB DEINE THEORIE IN DIE KOMMENTARE“ | gedimmtes Objekt |
+
+**Warum der Flash-Forward:** Der Nutzer fand den ersten Hook („Kurz vor 5 Uhr morgens verschwinden
+hier Juwelen …“) zu schwach. Ein Satz mit Ort und Uhrzeit ist Nachricht, kein Haken. Der Hook zeigt
+deshalb sofort Gewalt, Werkzeug und Summe, und Satz 2 stellt die offene Frage, die erst ganz am Ende
+aufgelöst wird. Frame 0 ist das Thumbnail: Täter frontal durchs Vitrinenglas, Werkzeug erhoben,
+Beute leuchtet im Vordergrund, Hook-Text über den Köpfen.
 
 **HUD Format B:**
 - Kennzeichnung oben in Rot: „ECHTE RAUBZÜGE #N · REKONSTRUKTION“.
