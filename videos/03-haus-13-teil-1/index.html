@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <title>Haus Nr. 13</title>
+    <script src="./assets/vendor/gsap.min.js"></script>
+    <script type="importmap">
+      { "imports": { "three": "./assets/vendor/three.module.min.js" } }
+    </script>
+    <style>
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+      @font-face { font-family: "Newsreader"; src: url("./assets/fonts/newsreader-latin-500-italic.woff2") format("woff2"); font-weight: 500; font-style: italic; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-500-normal.woff2") format("woff2"); font-weight: 500; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-600-normal.woff2") format("woff2"); font-weight: 600; font-style: normal; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-style: normal; }
+
+      :root {
+        --text: #ffffff;
+        --text-soft: rgba(255, 255, 255, 0.78);
+        --minus: #ff4d55;
+        --plus: #6ee59a;
+        --shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 28px rgba(0, 0, 0, 0.45);
+      }
+      body { margin: 0; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      .clip { position: absolute; inset: 0; }
+      #three-layer { width: 100%; height: 100%; display: block; }
+
+      #vignette { position: absolute; inset: 0; opacity: 1; background: radial-gradient(ellipse 78% 66% at 50% 46%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.78) 100%); }
+      /* dunkler Verlauf oben: HUD bleibt auch über hellen Szenen lesbar (Kontrast-Check) */
+      #hudshade { position: absolute; left: 0; right: 0; top: 0; height: 560px; background: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.4) 45%, rgba(0, 0, 0, 0)); }
+      #dim { position: absolute; inset: 0; opacity: 0; background: rgba(6, 8, 12, 0.55); }
+      #flash { position: absolute; inset: 0; opacity: 0; background: #ffffff; }
+
+      /* Blick aus deinem Fenster: Rahmen, Fensterkreuz, Vorhänge */
+      #winframe { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+      #winframe .f { position: absolute; inset: 120px 70px 260px 70px; border: 46px solid #17120f; box-shadow: 0 0 0 400px #0b0907, inset 0 0 60px rgba(0, 0, 0, 0.8); }
+      #winframe .v { position: absolute; left: 50%; top: 120px; bottom: 260px; width: 30px; margin-left: -15px; background: #17120f; }
+      #winframe .h { position: absolute; left: 70px; right: 70px; top: 520px; height: 26px; background: #17120f; }
+      #winframe .c { position: absolute; top: 60px; bottom: 200px; width: 230px; background: linear-gradient(90deg, #1c1a22, #2a2632 40%, #15131a); border-radius: 0 0 40px 40px; }
+      #winframe .c.l { left: 0; } #winframe .c.r { right: 0; transform: scaleX(-1); }
+      /* Handy-Kamera und Foto */
+      #phone { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+      #phone .body { position: absolute; inset: 300px 90px 250px 90px; border: 22px solid #0d0e11; border-radius: 64px; box-shadow: 0 0 0 1200px rgba(0, 0, 0, 0.82), 0 30px 80px rgba(0, 0, 0, 0.6); }
+      #phone .bar { position: absolute; left: 112px; right: 112px; top: 322px; height: 92px; display: flex; align-items: center; justify-content: center; font: 600 24px/1 "Inter"; letter-spacing: 0.18em; color: #ffd84d; background: rgba(0, 0, 0, 0.55); border-radius: 42px 42px 0 0; }
+      #phone .shutter { position: absolute; left: 50%; bottom: 300px; width: 120px; height: 120px; margin-left: -60px; border-radius: 50%; border: 8px solid #fff; box-sizing: border-box; background: rgba(255, 255, 255, 0.85); box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.4); }
+      #phone .meta { position: absolute; left: 112px; right: 112px; bottom: 272px; height: 180px; display: none; align-items: flex-end; justify-content: center; padding-bottom: 34px; box-sizing: border-box; font: 600 22px/1 "Inter"; letter-spacing: 0.16em; color: rgba(255, 255, 255, 0.85); background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)); border-radius: 0 0 42px 42px; }
+      #phone.photo .shutter { display: none; } #phone.photo .meta { display: flex; } #phone.photo .bar { color: #fff; }
+      /* HUD oben links */
+      #hud { position: absolute; left: 64px; top: 226px; width: 900px; color: var(--text); opacity: 0; text-shadow: var(--shadow); }
+      .hud-tag { font: 600 15px/1 "Inter"; letter-spacing: 0.24em; color: #ff8080; margin-bottom: 14px; }
+      .hud-label { font: 600 22px/1 "Inter"; letter-spacing: 0.2em; opacity: 0.92; }
+      .hud-num { margin-top: 12px; font: 500 86px/1 "Newsreader"; font-variant-numeric: lining-nums tabular-nums; }
+      .hud-sub { margin-top: 12px; font: 600 17px/1 "Inter"; letter-spacing: 0.22em; color: var(--text-soft); }
+      .hud-delta { position: absolute; left: 0; top: 214px; opacity: 0; }
+      .hud-delta .amt { font: 600 34px/1.1 "Inter"; color: var(--minus); }
+      .hud-delta.plus .amt { color: var(--plus); }
+      .hud-delta .lbl { margin-top: 6px; font: 500 21px/1.2 "Inter"; color: var(--text-soft); }
+
+      #hook { position: absolute; left: 0; right: 0; top: 560px; display: flex; justify-content: center; }
+      #hook p { margin: 0; max-width: 900px; text-align: center; font: 400 78px/1.12 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      #hook .hk { display: inline-block; transform-origin: 50% 60%; }
+      .cap { position: absolute; left: 0; right: 0; top: 1110px; display: flex; justify-content: center; opacity: 0; }
+      .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+
+      #endcard { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 430px; box-sizing: border-box; gap: 26px; }
+      #endcard h2 { margin: 0 0 22px; max-width: 900px; text-align: center; opacity: 0; font: 500 80px/1.1 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      .pill { opacity: 0; padding: 14px 42px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.72); background: rgba(255, 255, 255, 0.1); font: italic 400 46px/1.2 "Newsreader"; color: var(--text); text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); }
+      .pill.alt { border: 2px dashed #ff5a6a; background: rgba(255, 60, 80, 0.2); color: #ffdfe3; }
+      .cta { opacity: 0; margin-top: 40px; font: 600 23px/1 "Inter"; letter-spacing: 0.24em; color: rgba(255, 255, 255, 0.92); }
+      .arrow { display: block; width: 60px; height: 50px; opacity: 0; text-align: center; font: 500 44px/1 "Inter"; color: var(--text); }
+      .part { opacity: 0; margin-bottom: 6px; font: 700 26px/1 "Inter"; letter-spacing: 0.4em; color: #ff8080; }
+      .big { opacity: 0; margin: 0 0 18px; font: 500 150px/1 "Newsreader"; color: #fff; text-shadow: var(--shadow); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="1080" data-height="1920" data-duration="60.5">
+      <div id="world" class="clip" data-start="0" data-duration="60.5" data-track-index="0">
+        <canvas id="three-layer" width="1080" height="1920"></canvas>
+      </div>
+      <div id="overlay" class="clip" data-start="0" data-duration="60.5" data-track-index="1">
+        <div id="winframe"><div class="c l"></div><div class="c r"></div><div class="f"></div><div class="h"></div></div>
+        <div id="phone"><div class="body"></div><div class="bar">FOTO</div><div class="shutter"></div><div class="meta">LINDENSTRASSE · 03:17:48</div></div>
+        <div id="vignette"></div>
+        <div id="hudshade"></div>
+        <div id="dim"></div>
+        <div id="flash"></div>
+        <div id="hud">
+          <div class="hud-tag">GRUSELSERIE · TEIL 1 · FIKTION</div>
+          <div class="hud-label">HAUS NR. 13 · GEGENÜBER</div>
+          <div class="hud-num" id="hud-num">03:17:00</div>
+          <div class="hud-sub" id="hud-sub">LINDENSTRASSE</div>
+          <div class="hud-delta" data-in="12.70" data-out="14.98"><div class="amt">Haus Nr. 13</div><div class="lbl">leer seit 1998</div></div>
+          <div class="hud-delta" data-in="21.32" data-out="23.44"><div class="amt">Licht an</div><div class="lbl">im leeren Haus</div></div>
+          <div class="hud-delta" data-in="33.45" data-out="35.35"><div class="amt">Ursache</div><div class="lbl">nie geklärt</div></div>
+          <div class="hud-delta" data-in="46.40" data-out="48.30"><div class="amt">1 Person</div><div class="lbl">im Vorgarten</div></div>
+          <div class="hud-delta" data-in="54.08" data-out="57.18"><div class="amt">Haustür</div><div class="lbl">offen</div></div>
+        </div>
+        <!-- CAPTIONS:START -->
+        <div id="hook" data-out="7.62"><p><span class="hk">Im Haus gegenüber wohnt seit 20 Jahren niemand.</span> <span class="hk">Trotzdem winkt dir jede Nacht jemand zu.</span></p></div>
+        <div class="cap" id="cap-b2" data-in="7.62" data-out="10.92"><p>Alles beginnt, als du in die Lindenstraße ziehst.</p></div>
+        <div class="cap" id="cap-b3" data-in="10.92" data-out="15.08"><p>Die Nachbarn sind nett. Nur über Nummer 13 redet keiner.</p></div>
+        <div class="cap" id="cap-b4" data-in="15.08" data-out="19.42"><p>In der ersten Nacht wachst du auf. 3:17 Uhr.</p></div>
+        <div class="cap" id="cap-b5" data-in="19.42" data-out="22.24"><p>Gegenüber, im leeren Haus, brennt Licht.</p></div>
+        <div class="cap" id="cap-b6" data-in="22.24" data-out="24.70"><p>Im Fenster steht jemand. Ganz still.</p></div>
+        <div class="cap" id="cap-b7" data-in="24.70" data-out="27.23"><p>Dann hebt er langsam die Hand … und winkt.</p></div>
+        <div class="cap" id="cap-b8" data-in="27.23" data-out="30.73"><p>Am Morgen fragst du die alte Frau von nebenan.</p></div>
+        <div class="cap" id="cap-b9" data-in="30.73" data-out="34.77"><p>Sie wird blass. „Da wohnt keiner mehr. Nicht seit dem Feuer.“</p></div>
+        <div class="cap" id="cap-b10" data-in="34.77" data-out="38.93"><p>Zweite Nacht. 3:17 Uhr. Wieder das Licht.</p></div>
+        <div class="cap" id="cap-b11" data-in="38.93" data-out="41.47"><p>Aber diesmal steht er näher am Glas.</p></div>
+        <div class="cap" id="cap-b12" data-in="41.47" data-out="43.43"><p>Du machst ein Foto.</p></div>
+        <div class="cap" id="cap-b13" data-in="43.43" data-out="45.87"><p>Auf dem Foto ist das Fenster leer.</p></div>
+        <div class="cap" id="cap-b14" data-in="45.87" data-out="48.14"><p>Dafür steht jemand in deinem Vorgarten.</p></div>
+        <div class="cap" id="cap-b15" data-in="48.14" data-out="51.34"><p>Du schaust raus. Der Vorgarten ist leer.</p></div>
+        <div class="cap" id="cap-b16" data-in="51.34" data-out="55.98"><p>Dann hörst du es. Unten. Die Haustür geht auf.</p></div>
+        <!-- CAPTIONS:END -->
+        <div id="endcard">
+          <div class="part">FORTSETZUNG FOLGT</div>
+          <div class="big">Teil 2</div>
+          <h2>Was machst du jetzt?</h2>
+          <div class="pill">Runtergehen und nachsehen?</div>
+          <div class="pill">Die Polizei rufen?</div>
+          <div class="pill">Im Zimmer verstecken?</div>
+          <div class="pill alt">… oder etwas ganz anderes?</div>
+          <div class="cta">FOLG MIR FÜR TEIL 2</div>
+          <div class="arrow">↓</div>
+        </div>
+      </div>
+      <audio id="voiceover" src="./assets/audio/voiceover.wav" data-start="0" data-duration="60.5" data-track-index="2" data-volume="1"></audio>
+      <audio id="sounddesign" src="./assets/audio/sounddesign.wav" data-start="0" data-duration="60.5" data-track-index="3" data-volume="1"></audio>
+    </div>
+    <script id="cues" type="application/json">
+      {"s1": 7.62, "s2": 10.92, "s3": 15.08, "s4": 19.42, "s5": 22.24, "s6": 24.7, "s7": 27.23, "s8": 30.73, "s9": 34.77, "s10": 38.93, "s11": 41.47, "s12": 43.43, "s13": 45.87, "s14": 48.14, "s15": 51.34, "end": 55.98, "hookParts": [0.0, 4.4], "clockFlip": 17.9, "lightOn1": 21.22, "handUp": 24.98, "wave": 26.56, "pale": 31.28, "fireFlash": 33.3, "lightOn2": 38.18, "photo": 42.22, "someone": 46.4, "doorOpen": 53.88, "frameShots": [[0, 7.6], [19.42, 22.22], [34.77, 38.91], [48.14, 51.32]]}
+    </script>
+    <script>
+      const C = JSON.parse(document.getElementById("cues").textContent);
+      const tl = gsap.timeline({ paused: true });
+
+      const hook = document.getElementById("hook");
+      if (hook) tl.fromTo("#hook p", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, +hook.dataset.out - 0.3);
+      if (hook && C.hookParts) hook.querySelectorAll(".hk").forEach((el, i) => {
+        if (C.hookParts[i] !== undefined) tl.fromTo(el, { scale: 1 }, { scale: 1.08, duration: 0.1, ease: "power2.out", yoyo: true, repeat: 1 }, C.hookParts[i]);
+      });
+      document.querySelectorAll(".cap").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, tIn);
+        tl.fromTo(el.firstElementChild, { y: 14 }, { y: 0, duration: 0.35, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.16, ease: "power1.in" }, tOut - 0.16);
+      });
+      tl.set("#hud", { opacity: 1 }, 0);
+      document.querySelectorAll(".hud-delta").forEach((el) => {
+        const tIn = +el.dataset.in, tOut = +el.dataset.out;
+        if (tOut <= tIn) return;
+        tl.fromTo(el, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, tIn);
+        tl.to(el, { opacity: 0, duration: 0.25 }, tOut - 0.25);
+      });
+
+      // Blick aus deinem Fenster (Rahmen nur in den weiten Fenster-Shots)
+      for (const [a, b] of C.frameShots || []) { tl.set("#winframe", { opacity: 1 }, a); tl.set("#winframe", { opacity: 0 }, b); }
+      // Rückblende Feuer 1998: Sepia
+      tl.set("#three-layer", { filter: "sepia(0.85) contrast(1.15) brightness(0.95)" }, C.fireFlash);
+      tl.set("#three-layer", { filter: "none" }, C.s9);
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.6, duration: 0.05 }, C.fireFlash - 0.05);
+      tl.to("#flash", { opacity: 0, duration: 0.35 }, C.fireFlash);
+      // Handy: Kamera, Blitz, dann das Foto
+      tl.set("#phone", { opacity: 1 }, C.s11);
+      tl.set("#phone", { className: "photo" }, C.s12);
+      tl.set("#phone", { opacity: 0 }, C.s14);
+      tl.fromTo("#phone .shutter", { scale: 1 }, { scale: 0.86, duration: 0.08, yoyo: true, repeat: 1 }, C.photo - 0.05);
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 1, duration: 0.04 }, C.photo);
+      tl.to("#flash", { opacity: 0, duration: 0.5, ease: "power2.out" }, C.photo + 0.06);
+
+      // Endcard
+      tl.to("#dim", { opacity: 1, duration: 0.5, ease: "power1.out" }, C.end);
+      tl.to("#hud", { opacity: 0.35, duration: 0.5 }, C.end);
+      tl.fromTo(".part", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C.end + 0.05);
+      tl.fromTo(".big", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, C.end + 0.1);
+      tl.fromTo("#endcard h2", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, C.end + 0.6);
+      tl.fromTo(".pill", { opacity: 0, y: 18, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "back.out(1.6)", stagger: 0.25 }, C.end + 0.95);
+      tl.fromTo(".cta", { opacity: 0 }, { opacity: 1, duration: 0.4 }, C.end + 2.1);
+      tl.fromTo(".arrow", { opacity: 0, y: -6 }, { opacity: 1, y: 6, duration: 0.45, ease: "sine.inOut", repeat: 5, yoyo: true }, C.end + 2.2);
+
+      window.__timelines["main"] = tl;
+    </script>
+    <script type="module" src="./assets/scene.js"></script>
+  </body>
+</html>

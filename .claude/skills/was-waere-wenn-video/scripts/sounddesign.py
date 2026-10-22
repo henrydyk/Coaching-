@@ -12,8 +12,9 @@ sound.json:
 }
 Event-Typen: impact, whoosh, powerdown, siren, shutters, glass, crackle, ticks, heartbeat,
              birds, pop, riser, cash, knock, ignite, whoomp, steps, grinder, clink, zap, alarm,
-             martinshorn, hum, rewind (Rückspul-Effekt für Rückblenden). "t" darf auch eine Liste sein.
-Klangteppich-Stimmungen: dusk, night, tension, dawn, wonder, noir (Raubzug).
+             martinshorn, hum, rewind (Rückspul-Effekt für Rückblenden), creak (knarrende Tür),
+             camera (Handy-Auslöser). "t" darf auch eine Liste sein.
+Klangteppich-Stimmungen: dusk, night, tension, dawn, wonder, noir (Raubzug), horror (Gruselserie).
 Optional: "bed_gain": [[t, dB], ...] als Lautstärke-Automation des Klangteppichs.
 """
 import json, os, subprocess, sys
@@ -95,6 +96,8 @@ MOODS = {
     "wonder": dict(freqs=[130.8, 164.8, 196.0, 246.9, 329.6], cutoff=1800, sub=65.4),
     # Raubzug: dunkler Moll-Septakkord mit pulsierendem Puls (Heist/Noir)
     "noir": dict(freqs=[73.4, 87.3, 110.0, 130.8], cutoff=700, sub=36.7, trem=0.3, trem_rate=2.2),
+    # Grusel: tiefer Cluster (D, Es, As = Tritonus) mit langsamem Schweben, sehr dunkel
+    "horror": dict(freqs=[73.4, 77.8, 103.8, 146.8], cutoff=380, sub=36.7, trem=0.4, trem_rate=0.45),
 }
 
 
@@ -262,6 +265,26 @@ def knock():
     return norm(echo(fade(x, 0.001, 0.1), taps=((0.045, 0.3), (0.11, 0.15))))
 
 
+def creak(dur=1.6):
+    """Knarrende Tür/Treppenstufe: rauer Sägezahn mit schwankender Tonhöhe durch Holz-Resonanzen."""
+    t = secs(dur)
+    f = 95 + 35 * np.sin(2 * np.pi * 0.7 * t) + 20 * np.sin(2 * np.pi * 3.1 * t) + 15 * RNG.standard_normal(len(t)).cumsum() / np.sqrt(len(t))
+    x = signal.sawtooth(2 * np.pi * np.cumsum(f) / SR, 0.2)
+    grit = (RNG.random(len(t)) < 0.02 + 0.03 * np.sin(np.pi * t / dur)) * RNG.standard_normal(len(t))
+    x = bp(x + 2.5 * grit, 250, 2400) + 0.6 * bp(x, 700, 900, 2) + 0.4 * bp(x, 1500, 1700, 2)
+    return norm(fade(x * np.sin(np.pi * np.clip(t / dur, 0, 1)) ** 0.6, 0.05, 0.2))
+
+
+def camera_click():
+    """Handykamera: zwei kurze mechanische Klicks."""
+    t = secs(0.25)
+    c = hp(RNG.standard_normal(len(t)), 1800) * np.exp(-t * 160)
+    x = c.copy()
+    k = int(0.07 * SR)
+    x[k:] += 0.8 * c[:len(t) - k]
+    return norm(fade(x, 0.001, 0.05))
+
+
 def ignite():
     t = secs(1.4)
     strike = hp(RNG.standard_normal(len(t)), 2000) * np.exp(-t * 7)
@@ -387,6 +410,10 @@ def make_event(ev):
         return martinshorn(ev.get("dur", 2.5))
     if k == "hum":
         return hum(ev.get("dur", 4))
+    if k == "creak":
+        return creak(ev.get("dur", 1.6))
+    if k == "camera":
+        return camera_click()
     if k == "steps":
         return steps(ev.get("dur", 2), ev.get("rate", 3), ev.get("crowd", 1))
     raise ValueError(f"Unbekannter Event-Typ: {k}")

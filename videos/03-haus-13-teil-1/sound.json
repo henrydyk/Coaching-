@@ -1,0 +1,248 @@
+{
+ "duration": 60.5,
+ "target_lufs": -22,
+ "bed": [
+  {
+   "mood": "horror",
+   "from": 0,
+   "to": 7.92,
+   "gain": -14
+  },
+  {
+   "mood": "dawn",
+   "from": 7.42,
+   "to": 15.38,
+   "gain": -24
+  },
+  {
+   "mood": "horror",
+   "from": 14.88,
+   "to": 27.53,
+   "gain": -14
+  },
+  {
+   "mood": "dawn",
+   "from": 27.03,
+   "to": 33.6,
+   "gain": -24
+  },
+  {
+   "mood": "horror",
+   "from": 33.1,
+   "to": 60.5,
+   "gain": -14
+  }
+ ],
+ "bed_gain": [
+  [
+   0,
+   0
+  ],
+  [
+   26.06,
+   0
+  ],
+  [
+   26.26,
+   -12
+  ],
+  [
+   26.66,
+   0
+  ],
+  [
+   48.14,
+   0
+  ],
+  [
+   48.34,
+   -10
+  ],
+  [
+   53.58,
+   -14
+  ],
+  [
+   54.18,
+   0
+  ],
+  [
+   60.5,
+   0
+  ]
+ ],
+ "events": [
+  {
+   "type": "impact",
+   "t": 0.0,
+   "variant": "soft",
+   "gain": -10
+  },
+  {
+   "type": "heartbeat",
+   "t": 0.1,
+   "dur": 7.32,
+   "bpm": 64,
+   "gain": -15
+  },
+  {
+   "type": "whoosh",
+   "t": 7.32,
+   "gain": -16
+  },
+  {
+   "type": "birds",
+   "t": 7.82,
+   "dur": 7.06,
+   "gain": -27
+  },
+  {
+   "type": "ticks",
+   "t": 15.08,
+   "dur": 4.34,
+   "rate": 1,
+   "gain": -16
+  },
+  {
+   "type": "pop",
+   "t": 17.9,
+   "gain": -16
+  },
+  {
+   "type": "zap",
+   "t": 21.17,
+   "dur": 0.5,
+   "gain": -20
+  },
+  {
+   "type": "impact",
+   "t": 21.22,
+   "variant": "soft",
+   "gain": -13
+  },
+  {
+   "type": "heartbeat",
+   "t": 22.24,
+   "dur": 4.32,
+   "bpm": 78,
+   "gain": -13
+  },
+  {
+   "type": "riser",
+   "t": 25.36,
+   "dur": 1.15,
+   "gain": -17
+  },
+  {
+   "type": "impact",
+   "t": 26.56,
+   "gain": -7
+  },
+  {
+   "type": "birds",
+   "t": 27.33,
+   "dur": 5.77,
+   "gain": -28
+  },
+  {
+   "type": "knock",
+   "t": [
+    27.48,
+    27.83
+   ],
+   "gain": -11
+  },
+  {
+   "type": "riser",
+   "t": 31.48,
+   "dur": 1.77,
+   "gain": -18
+  },
+  {
+   "type": "whoomp",
+   "t": 33.3,
+   "gain": -8
+  },
+  {
+   "type": "crackle",
+   "t": 33.3,
+   "dur": 1.47,
+   "gain": -13
+  },
+  {
+   "type": "ticks",
+   "t": 34.77,
+   "dur": 7.45,
+   "rate": 1,
+   "gain": -18
+  },
+  {
+   "type": "zap",
+   "t": 38.13,
+   "dur": 0.5,
+   "gain": -20
+  },
+  {
+   "type": "heartbeat",
+   "t": 38.93,
+   "dur": 3.29,
+   "bpm": 104,
+   "gain": -12
+  },
+  {
+   "type": "camera",
+   "t": 42.2,
+   "gain": -6
+  },
+  {
+   "type": "riser",
+   "t": 45.1,
+   "dur": 1.25,
+   "gain": -15
+  },
+  {
+   "type": "impact",
+   "t": 46.4,
+   "gain": -5
+  },
+  {
+   "type": "hum",
+   "t": 48.14,
+   "dur": 3.2,
+   "gain": -24
+  },
+  {
+   "type": "creak",
+   "t": 53.88,
+   "dur": 2.3,
+   "gain": -5
+  },
+  {
+   "type": "whoosh",
+   "t": 54.28,
+   "dur": 1.4,
+   "gain": -14
+  },
+  {
+   "type": "impact",
+   "t": 55.13,
+   "gain": -7
+  },
+  {
+   "type": "impact",
+   "t": 55.98,
+   "variant": "soft",
+   "gain": -12
+  },
+  {
+   "type": "pop",
+   "t": [
+    56.93,
+    57.18,
+    57.43,
+    57.68
+   ],
+   "gain": -17
+  }
+ ]
+}

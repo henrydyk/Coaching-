@@ -1,0 +1,108 @@
+{
+  "voice": "chatterbox/thorsten-ref.wav",
+  "total": 57.835,
+  "beats": [
+    {
+      "id": "b1",
+      "caption": "Im Haus gegenüber wohnt seit 20 Jahren niemand. Trotzdem winkt dir jede Nacht jemand zu.",
+      "start": 0.25,
+      "end": 7.17
+    },
+    {
+      "id": "b2",
+      "caption": "Alles beginnt, als du in die Lindenstraße ziehst.",
+      "start": 7.697,
+      "end": 10.637
+    },
+    {
+      "id": "b3",
+      "caption": "Die Nachbarn sind nett. Nur über Nummer 13 redet keiner.",
+      "start": 10.997,
+      "end": 14.737
+    },
+    {
+      "id": "b4",
+      "caption": "In der ersten Nacht wachst du auf. 3:17 Uhr.",
+      "start": 15.164,
+      "end": 18.864
+    },
+    {
+      "id": "b5",
+      "caption": "Gegenüber, im leeren Haus, brennt Licht.",
+      "start": 19.504,
+      "end": 21.904
+    },
+    {
+      "id": "b6",
+      "caption": "Im Fenster steht jemand. Ganz still.",
+      "start": 22.324,
+      "end": 24.424
+    },
+    {
+      "id": "b7",
+      "caption": "Dann hebt er langsam die Hand … und winkt.",
+      "start": 24.784,
+      "end": 26.784
+    },
+    {
+      "id": "b8",
+      "caption": "Am Morgen fragst du die alte Frau von nebenan.",
+      "start": 27.308,
+      "end": 30.508
+    },
+    {
+      "id": "b9",
+      "caption": "Sie wird blass. „Da wohnt keiner mehr. Nicht seit dem Feuer.“",
+      "start": 30.808,
+      "end": 34.308
+    },
+    {
+      "id": "b10",
+      "caption": "Zweite Nacht. 3:17 Uhr. Wieder das Licht.",
+      "start": 34.845,
+      "end": 38.445
+    },
+    {
+      "id": "b11",
+      "caption": "Aber diesmal steht er näher am Glas.",
+      "start": 39.005,
+      "end": 41.085
+    },
+    {
+      "id": "b12",
+      "caption": "Du machst ein Foto.",
+      "start": 41.545,
+      "end": 42.705
+    },
+    {
+      "id": "b13",
+      "caption": "Auf dem Foto ist das Fenster leer.",
+      "start": 43.505,
+      "end": 45.345
+    },
+    {
+      "id": "b14",
+      "caption": "Dafür steht jemand in deinem Vorgarten.",
+      "start": 45.945,
+      "end": 47.685
+    },
+    {
+      "id": "b15",
+      "caption": "Du schaust raus. Der Vorgarten ist leer.",
+      "start": 48.22,
+      "end": 51.16
+    },
+    {
+      "id": "b16",
+      "caption": "Dann hörst du es. Unten. Die Haustür geht auf.",
+      "start": 51.42,
+      "end": 54.22
+    },
+    {
+      "id": "b17",
+      "caption": "Folg mir für Teil 2.",
+      "start": 56.056,
+      "end": 57.596
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "title": "Haus Nr. 13 – Teil 1 (Gruselserie, Fiktion)",
+  "engine": "chatterbox",
+  "exaggeration": 0.7,
+  "cfg": 0.45,
+  "candidates": 3,
+  "flow": 240,
+  "tempo": 1.0,
+  "voice_fx": "cinematic",
+  "lead_in": 0.25,
+  "beats": [
+    {
+      "id": "b1",
+      "role": "hook",
+      "caption": "Im Haus gegenüber wohnt seit 20 Jahren niemand. Trotzdem winkt dir jede Nacht jemand zu.",
+      "say": "Im Haus gegenüber wohnt seit zwanzig Jahren niemand. Trotzdem winkt dir jede Nacht jemand zu.",
+      "pause": 0.5
+    },
+    {
+      "id": "b2",
+      "role": "caption",
+      "caption": "Alles beginnt, als du in die Lindenstraße ziehst.",
+      "break": true
+    },
+    {
+      "id": "b3",
+      "role": "caption",
+      "caption": "Die Nachbarn sind nett. Nur über Nummer 13 redet keiner.",
+      "say": "Die Nachbarn sind nett. Nur über Nummer dreizehn redet keiner.",
+      "pause": 0.4
+    },
+    {
+      "id": "b4",
+      "role": "caption",
+      "caption": "In der ersten Nacht wachst du auf. 3:17 Uhr.",
+      "say": "In der ersten Nacht wachst du auf. Es ist drei Uhr siebzehn.",
+      "break": true
+    },
+    {
+      "id": "b5",
+      "role": "caption",
+      "caption": "Gegenüber, im leeren Haus, brennt Licht."
+    },
+    {
+      "id": "b6",
+      "role": "caption",
+      "caption": "Im Fenster steht jemand. Ganz still."
+    },
+    {
+      "id": "b7",
+      "role": "caption",
+      "caption": "Dann hebt er langsam die Hand … und winkt.",
+      "say": "Dann hebt er langsam die Hand. Und winkt.",
+      "pause": 0.5
+    },
+    {
+      "id": "b8",
+      "role": "caption",
+      "caption": "Am Morgen fragst du die alte Frau von nebenan.",
+      "break": true
+    },
+    {
+      "id": "b9",
+      "role": "caption",
+      "caption": "Sie wird blass. „Da wohnt keiner mehr. Nicht seit dem Feuer.“",
+      "say": "Sie wird blass. Da wohnt keiner mehr. Nicht seit dem Feuer.",
+      "pause": 0.5
+    },
+    {
+      "id": "b10",
+      "role": "caption",
+      "caption": "Zweite Nacht. 3:17 Uhr. Wieder das Licht.",
+      "say": "Zweite Nacht. Drei Uhr siebzehn. Wieder das Licht.",
+      "break": true
+    },
+    {
+      "id": "b11",
+      "role": "caption",
+      "caption": "Aber diesmal steht er näher am Glas."
+    },
+    {
+      "id": "b12",
+      "role": "caption",
+      "caption": "Du machst ein Foto."
+    },
+    {
+      "id": "b13",
+      "role": "caption",
+      "caption": "Auf dem Foto ist das Fenster leer."
+    },
+    {
+      "id": "b14",
+      "role": "caption",
+      "caption": "Dafür steht jemand in deinem Vorgarten.",
+      "pause": 0.5
+    },
+    {
+      "id": "b15",
+      "role": "caption",
+      "caption": "Du schaust raus. Der Vorgarten ist leer.",
+      "break": true
+    },
+    {
+      "id": "b16",
+      "role": "caption",
+      "caption": "Dann hörst du es. Unten. Die Haustür geht auf.",
+      "pause": 1.8
+    },
+    {
+      "id": "b17",
+      "role": "endcard",
+      "caption": "Folg mir für Teil 2.",
+      "say": "Folg mir für Teil zwei.",
+      "pause": 0.2
+    }
+  ]
+}
