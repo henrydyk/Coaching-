@@ -10,6 +10,16 @@ description: Erstellt fertige TikTok-Videos (MP4, 1080x1920) als 3D-Low-Poly-Ges
   ein realer Coup, recherchiert, mit Quellen belegt und nachgestellt. Referenz:
   `videos/02-gruenes-gewoelbe/`. Fallideen stehen in `references/fallideen.md`.
 - **A – Mal angenommen** ist ein hypothetisches Szenario. Referenz: `videos/01-keine-regeln/`.
+- **C – Gruselserie (Fiktion)** ist eine ausgedachte Horror-Geschichte in mehreren Teilen. Jeder Teil
+  endet auf dem spannendsten Moment (Cliffhanger) mit der Endcard „Teil N+1 · Was machst du jetzt?“.
+  Referenz: `videos/03-haus-13-teil-1/`, Serienplan `videos/serie-haus-13.md`. Im HUD steht „FIKTION“.
+
+**Tempo (der Nutzer will schnell):** Skript schreiben → Voiceover **sofort** im Hintergrund starten →
+währenddessen Szene bauen (vorhandene Szenen kopieren statt neu bauen) → Szene mit vorläufigen Cues
+per Snapshot testen → nach der Stimme `words.py` + `cues.py` (im Videoordner) → ein Prüf-Snapshot →
+rendern. Keine Rückfragen, keine Vergleichsrunden ohne Anlass. Ziel: ca. 45–60 min pro Video, davon
+ca. 22 min Render. JS-Fehler findest du schnell mit einem Puppeteer-Aufruf (`pageerror`), der Check
+bricht ohne Audio vorher ab.
 
 Jedes Video ist ein HyperFrames-Projekt unter `videos/NN-<slug>/`. Die 3D-Welt läuft in three.js über den
 HyperFrames-`three`-Adapter (`hf-seek`), HUD, Untertitel und Endcard sind HTML und GSAP. Stimme, Musik

@@ -200,3 +200,23 @@ Beute leuchtet im Vordergrund, Hook-Text über den Köpfen.
 
 **Sound Format B:** Klangteppich `noir`, dazu Schleifer, Klirren, Stromschlag, Glas-Treffer,
 Museumsalarm, Martinshorn, Überwachungs-Brummen, Wumms beim Feuer und Stille vor der Auflösung.
+
+
+## 7. Format C: Gruselserie (Fiktion)
+
+- **Erzählperspektive „du“**, Präsens, kurze Sätze. Stimme wie Standard (Thorsten ruhig, fließend), bei
+  Grusel `tempo` 1.0 statt 1.08: langsamer wirkt unheimlicher.
+- **Hook = das unheimlichste Bild der Folge** als Behauptung: „Im Haus gegenüber wohnt seit 20 Jahren
+  niemand. Trotzdem winkt dir jede Nacht jemand zu.“ Frame 0 zeigt genau das (Thumbnail).
+- **Wiederkehrende Motive** pro Serie: eine Uhrzeit (3:17), ein Ort, eine Zahl, eine Figur ohne Gesicht.
+- **Eskalation in Nächten**: Nacht 1 harmlos-seltsam, Nacht 2 näher, Beweis (Foto) widerspricht dem
+  Gesehenen, dann ist es im Haus.
+- **Cliffhanger**: letzter Satz kurz, dann 1,5–2 s Stille mit nur einem Geräusch (Tür knarrt) und dem
+  Bild (Gestalt im Türrahmen). Erst dann Endcard „FORTSETZUNG FOLGT · Teil N+1 · Was machst du jetzt?“
+  mit 3 Pills plus „… oder etwas ganz anderes?“ und „FOLG MIR FÜR TEIL N+1“. Video über 60 s.
+- **HUD**: Tag „GRUSELSERIE · TEIL N · FIKTION“, große Zahl = laufende Uhrzeit, Unterzeile „NACHT 1“,
+  „TAG 2 · NEBENAN“; Rückblenden in Sepia mit Jahreszahl als große Zahl.
+- **Bildsprache**: Blick aus deinem Fenster (CSS-Fensterrahmen ohne Mittelsteg, sonst schneidet er das
+  Motiv), Teleobjektiv-Shots (fov 7–9) aufs Fenster gegenüber, Silhouetten als Canvas-Textur hinter
+  Glas, Handy-Overlay für Fotos, Flur mit Tür und kaltem Gegenlicht. Sound: Bett `horror`, Herzschlag,
+  `creak`, `camera`, Stille-Dips per `bed_gain` vor jedem Schreckmoment.
