@@ -40,15 +40,25 @@ def list_voices(search=""):
             return
 
 
+def best_model():
+    try:
+        ids = {m["model_id"] for m in api("/v1/models") if m.get("can_do_text_to_speech", True)}
+    except Exception:
+        ids = set()
+    return next((m for m in ("eleven_v4", "eleven_v3", "eleven_multilingual_v2") if m in ids), "eleven_v3")
+
+
 def sample(folder, ids):
     os.makedirs(folder, exist_ok=True)
     mine = {v["voice_id"] for v in api("/v1/voices").get("voices", [])}
+    model = best_model()
+    print("Modell:", model)
     for pair in ids:
         owner, vid = pair.split(":")
         if vid not in mine:  # Library-Stimmen müssen erst ins eigene Konto
             vid = api(f"/v1/voices/add/{owner}/{vid}", {"new_name": f"de-{vid[:6]}"})["voice_id"]
         audio = api(f"/v1/text-to-speech/{vid}?output_format=mp3_44100_128",
-                    {"text": HOOK, "model_id": "eleven_v3", "language_code": "de",
+                    {"text": HOOK, "model_id": model, "language_code": "de",
                      "voice_settings": {"stability": 0.5, "similarity_boost": 0.75}}, raw=True)
         out = os.path.join(folder, f"elevenlabs_{vid}.mp3")
         open(out, "wb").write(audio)

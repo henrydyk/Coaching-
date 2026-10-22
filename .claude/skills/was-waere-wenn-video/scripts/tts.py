@@ -244,7 +244,7 @@ def synth_chatterbox(segs, cfg, cache):
 
 def synth_elevenlabs(segs, cfg, cache):
     """ElevenLabs-API (Schlüssel aus der Umgebungsvariable ELEVENLABS_API_KEY, nie im Repo).
-    script.json: "voice_id" (Pflicht), "el_model" (Standard eleven_v3), pro Beat/Segment "stability",
+    script.json: "voice_id" (Pflicht), "el_model" (Standard "auto" = neuestes: v4, sonst v3), pro Beat/Segment "stability",
     "style", "similarity", "el_speed". Bei eleven_v3 steuern Audio-Tags im Text die Emotion, z. B.
     "[whispers] Niemand merkt etwas." Kommerzielle Nutzung nur mit Audio aus einem bezahlten Abo."""
     import ssl, urllib.error, urllib.request
@@ -253,9 +253,18 @@ def synth_elevenlabs(segs, cfg, cache):
     if not key:
         sys.exit("ELEVENLABS_API_KEY fehlt: in den Umgebungseinstellungen (Network secrets) anlegen, neue Sitzung starten.")
     voice_id = cfg.get("voice_id") or sys.exit('"voice_id" fehlt in script.json (deutsche Stimme aus der Voice Library)')
-    model = cfg.get("el_model", "eleven_v3")
     ca = "/root/.ccr/ca-bundle.crt"
     ctx = ssl.create_default_context(cafile=ca if os.path.exists(ca) else None)
+    model = cfg.get("el_model", "auto")
+    if model == "auto":  # neuestes Modell nehmen, das das Konto anbietet (v4 vor v3 vor multilingual v2)
+        req = urllib.request.Request("https://api.elevenlabs.io/v1/models", headers={"xi-api-key": key})
+        try:
+            with urllib.request.urlopen(req, timeout=60, context=ctx) as r:
+                ids = {m["model_id"] for m in json.loads(r.read()) if m.get("can_do_text_to_speech", True)}
+        except urllib.error.HTTPError:
+            ids = set()
+        model = next((m for m in ("eleven_v4", "eleven_v3", "eleven_multilingual_v2") if m in ids), "eleven_v3")
+        print(f"ElevenLabs-Modell: {model}", flush=True)
 
     def one(it):
         s = it["seg"]
@@ -312,7 +321,7 @@ def main(video_dir):
                  "style": float(get("style", 0.0)), "similarity": float(get("similarity", 0.75)),
                  "el_speed": float(get("el_speed", 1.0))}
             sig = {"edge": f"{engine}|{voice}|{s['rate']}|{s['pitch']}|{s['volume']}",
-                   "elevenlabs": f"{engine}|{cfg.get('voice_id')}|{cfg.get('el_model', 'eleven_v3')}|{s['stability']}|"
+                   "elevenlabs": f"{engine}|{cfg.get('voice_id')}|{cfg.get('el_model', 'auto')}|{s['stability']}|"
                                  f"{s['style']}|{s['similarity']}|{s['el_speed']}|{s['speed']}"}.get(
                 engine, f"{engine}|{cfg.get('voice_ref', 'thorsten')}|{s['ex']}|{s['cfg']}|{s['speed']}")
             s["key"] = f"{beat['id']}-{j}-" + hashlib.sha1(f"{sig}|{s['text']}".encode()).hexdigest()[:12]
@@ -410,7 +419,7 @@ def main(video_dir):
     # Stimme auf -16 LUFS (TikTok-üblich) bringen, linear
     gain = float(cfg.get("vo_lufs", -16.0)) - lufs(shaped)
     run(["ffmpeg", "-y", "-i", shaped, "-af", f"volume={gain:.2f}dB,alimiter=limit=0.89", "-ar", str(SR), vo])
-    label = {"edge": voice, "elevenlabs": f"elevenlabs/{cfg.get('voice_id')}/{cfg.get('el_model', 'eleven_v3')}"}.get(
+    label = {"edge": voice, "elevenlabs": f"elevenlabs/{cfg.get('voice_id')}/{cfg.get('el_model', 'auto')}"}.get(
         engine, f"chatterbox/{os.path.basename(cfg.get('voice_ref', 'thorsten-ref.wav'))}")
     json.dump({"voice": label, "total": round(t, 3), "beats": timing},
               open(os.path.join(video_dir, "timing.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
