@@ -30,6 +30,8 @@
       #three-layer { width: 100%; height: 100%; display: block; }
 
       #vignette { position: absolute; inset: 0; opacity: 0.8; background: radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%); }
+      /* dunkler Verlauf oben: HUD bleibt auch über hellen Szenen lesbar (Kontrast-Check) */
+      #hudshade { position: absolute; left: 0; right: 0; top: 0; height: 560px; background: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.4) 45%, rgba(0, 0, 0, 0)); }
       #dim { position: absolute; inset: 0; opacity: 0; background: rgba(6, 8, 12, 0.55); }
       #flash { position: absolute; inset: 0; opacity: 0; background: #ffffff; }
 
@@ -43,7 +45,7 @@
 
       /* HUD oben links */
       #hud { position: absolute; left: 64px; top: 226px; width: 900px; color: var(--text); opacity: 0; text-shadow: var(--shadow); }
-      .hud-tag { font: 600 15px/1 "Inter"; letter-spacing: 0.24em; color: #ff6b6b; margin-bottom: 14px; }
+      .hud-tag { font: 600 15px/1 "Inter"; letter-spacing: 0.24em; color: #ff8080; margin-bottom: 14px; }
       .hud-label { font: 600 22px/1 "Inter"; letter-spacing: 0.2em; opacity: 0.92; }
       .hud-num { margin-top: 12px; font: 500 86px/1 "Newsreader"; font-variant-numeric: lining-nums tabular-nums; }
       .hud-sub { margin-top: 12px; font: 600 17px/1 "Inter"; letter-spacing: 0.22em; color: var(--text-soft); }
@@ -74,6 +76,7 @@
 
       <div id="overlay" class="clip" data-start="0" data-duration="64" data-track-index="1">
         <div id="vignette"></div>
+        <div id="hudshade"></div>
         <div id="cctv"><div class="lines"></div><div class="frame"></div><div class="rec"><span class="dot"></span>REC</div><div class="cam">KAMERA · JUWELENZIMMER</div></div>
         <div id="dim"></div>
         <div id="flash"></div>
