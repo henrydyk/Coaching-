@@ -19,8 +19,8 @@ Sobald `ELEVENLABS_API_KEY` in der Umgebung gesetzt ist (prüfen, ohne den Wert 
    vorgefertigten englischen Stimmen wie Roger/Sarah, die haben wieder Akzent).
 2. Hörproben mit dem Hook: `el_voices.py sample renders/stimmen <owner_id>:<voice_id> …`, dem Nutzer
    schicken, er wählt eine.
-3. In `script.json`: `"engine": "elevenlabs"`, `"voice_id": "<gewählt>"`, `"el_model": "eleven_v3"`,
-   `"stability": 0.5`, `"flow": 240`, `"tempo": 1.0`. Spannung über v3-Audio-Tags im `say`-Text
+3. In `script.json`: `"engine": "elevenlabs"`, `"voice_id": "<gewählt>"`, `"el_model": "auto"` (neuestes Modell; laut Nutzer-Dashboard gibt es seit Okt. 2026 „Eleven v4“),
+   `"stability": 0.5`, `"flow": 240`, `"tempo": 1.0`. Spannung über Audio-Tags im `say`-Text (v3/v4)
    (`[whispers]`, `[nervous]`, `[dramatic]`), aber sparsam. Kein `exaggeration`/`cfg` (nur Chatterbox).
 4. `tts.py` → `words.py` → `python3 -I cues.py` (im Videoordner) → `captions.py` → `sounddesign.py` →
    Snapshot-Kontrolle → `render.sh`. Mit ElevenLabs dauert die Stimme unter 1 Minute.
