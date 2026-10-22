@@ -14,7 +14,7 @@ wav = os.path.join(video_dir, "assets", "audio", "voiceover.wav")
 raw = subprocess.run(["ffmpeg", "-v", "error", "-i", wav, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
                      stdin=subprocess.DEVNULL, capture_output=True, check=True).stdout
 audio = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
-segs, _ = WhisperModel(model_name, device="cpu", compute_type="int8").transcribe(audio, language="de", word_timestamps=True)
+segs, _ = WhisperModel(model_name, device="cpu", compute_type="int8").transcribe(audio, language="de", word_timestamps=True, condition_on_previous_text=False)  # sonst lässt Whisper bei langen Aufnahmen einzelne Wörter aus
 words = []
 for s in segs:
     print(" ".join(f"{w.word.strip()}@{w.start:.2f}" for w in s.words))
