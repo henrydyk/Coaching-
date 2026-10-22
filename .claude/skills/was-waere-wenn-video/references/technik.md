@@ -26,16 +26,27 @@ bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh   # einmal 
 
 - Das legt `.venv-chatterbox/` an (torch CPU + `chatterbox-tts`, MIT). Beim ersten Lauf lädt der
   Worker das Modell von HuggingFace (ca. 3 GB).
-- `tts.py` startet `scripts/chatterbox_worker.py` einmal für alle fehlenden Segmente. Das kostet ca.
-  30 s CPU pro Segment und Kandidat, ein 60-s-Skript mit 2 Kandidaten also ca. 25–30 min. Starte es im
-  Hintergrund und baue in der Zeit an der Szene.
+- `tts.py` startet `scripts/chatterbox_worker.py`. Der Worker lädt das Modell einmal (ca. 45 s), wertet
+  die Stimmvorlage einmal aus und verteilt die Segmente per `fork` auf 4 Prozesse mit je 1 Thread
+  (Gewichte geteilt, ca. 6 GB RAM gesamt). Gemessen: ca. 70–80 s pro Segment und Prozess, also ca.
+  18 s pro Segment bei 4 Kernen. Ein 60-s-Skript (ca. 26 Segmente) ist in ca. 8–10 min fertig.
+  Ein Prozess mit 4 Threads war nur halb so schnell (OpenMP wartet bei den kleinen Schritten aktiv).
+- **Reihenfolge für Tempo:** Skript fertig → Voiceover sofort im Hintergrund starten → in der Zeit
+  Szene bauen. Die Cues hängen an den Wortzeiten, deshalb wartet nur der Feinschliff auf die Stimme.
 - Fertige Segmente liegen in `.tts-cache/` (Schlüssel aus Text und Regie). Ändere einen Satz, wird nur
   dieser neu erzeugt.
 - Bei hoher `exaggeration` erfindet Chatterbox manchmal Silben am Satzende oder verschluckt Wörter.
-  Deshalb erzeugt `tts.py` pro Segment `candidates` Varianten (Seeds) und lässt Whisper (`asr_model`,
-  Standard `medium`) die Variante wählen, deren Transkript am besten zum Text passt. Werte unter 0.85
-  markiert das Skript mit `<-- prüfen!`. Dann hörst du das Segment an, formulierst um oder erhöhst
-  `candidates`.
+  Deshalb prüft Whisper (`asr_model`, Standard `medium`, greedy) jede Aufnahme. Nur Segmente unter 0.9
+  oder mit auffälliger Länge bekommen einen weiteren Seed (bis `candidates`, Standard 3). Werte unter
+  0.85 markiert das Skript mit `<-- prüfen!`.
+- **Kurze Einzel-Segmente vermeiden:** „Dresden.“ allein bekam angehängtes Gebrabbel, „Fehlt bis heute.“
+  klang wie „Wendt bis heute“. Mit Kontext klappt es: „Dresden. Alles beginnt Tage vorher.“ als ein
+  Segment, „Er fehlt bis heute.“
+- **Thorsten emotional spricht langsam** (ca. 1,75 Wörter/s, viele Atempausen). Für die Länge gibt es
+  `max_pause` (z. B. 0.22: Pausen in den Aufnahmen kürzen) und `tempo` (z. B. 1.15: ganzes Voiceover
+  per atempo). Beides wirkt nur beim Zusammensetzen, ohne Neugenerieren. Rechne mit ca. 63 s Stimme
+  für 135 Wörter, also Videos um 64–66 s. Über 1 Minute ist auf TikTok ohnehin Pflicht für das
+  Creator Rewards Program.
 - Die Stimmvorlage (`voice_ref`) ist eine 10–15 s lange, saubere Aufnahme. Thorsten-Voice ist CC0 und
   darf kommerziell genutzt werden. Klone nie die Stimme einer realen Person ohne deren Erlaubnis.
 - Wortzeitstempel für die Cues: `python3 -I .claude/skills/was-waere-wenn-video/scripts/words.py videos/NN-slug`
@@ -116,5 +127,8 @@ Die Skripte machen das bereits.
   hart pro Shot (Liste `[Startzeit, Stimmung, Himmel an?]`), nicht weich überblendet.
 - Kamerafahrten an Gebäuden: Laternenmasten in der Sichtachse vermeiden. Die Kamera gerade auf das
   Motiv richten, wenn Laternen im Raster stehen.
-- Laufzeit: ca. 0,6 s pro Frame mit Software-WebGL und einem Worker, also ca. 10 min für 30 s und
-  ca. 20 min für 60 s.
+- Laufzeit: ca. 0,6–1,5 s pro Frame mit Software-WebGL, also ca. 20–25 min für 60 s. **Mehr Worker
+  helfen nicht:** gemessen 1 Worker = 4 Worker (77 vs. 78 Frames nach 128 s), weil SwiftShader schon
+  alle Kerne nutzt. `render.sh` nimmt deshalb 1 Worker. Teuer sind Innenräume mit vielen Lichtern,
+  Glas-Splittern und Glows. Lichter mit Intensität 0 auf `visible = false` setzen spart Rechenzeit
+  (Ergebnis identisch).

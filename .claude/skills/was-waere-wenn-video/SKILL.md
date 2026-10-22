@@ -41,10 +41,12 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
    kopiert die Vorlage, three.js, GSAP und die Schriften.
 3. **Voiceover:** `python3 -I .claude/skills/was-waere-wenn-video/scripts/tts.py videos/NN-slug`.
    Standard ist Chatterbox mit der Stimme Thorsten, sehr emotional (einmal pro Container vorher
-   `scripts/setup_chatterbox.sh`; ca. 25–30 min für 60 s, im Hintergrund laufen lassen). Das erzeugt
-   `assets/audio/voiceover.wav` (−16 LUFS) und `timing.json` mit Start/Ende je Beat. Prüfe die mit
-   `<-- prüfen!` markierten Segmente. Ist die Länge falsch, kürzt du Text und Pausen oder setzt
-   `speed`. Laufe nicht weiter, bevor die Länge passt.
+   `scripts/setup_chatterbox.sh`). **Starte das Voiceover sofort nach dem Skript im Hintergrund**
+   (ca. 8–10 min für 60 s, parallel auf allen Kernen) und baue währenddessen Schritt 2 und die Szene.
+   Das erzeugt `assets/audio/voiceover.wav` (−16 LUFS) und `timing.json` mit Start/Ende je Beat. Prüfe
+   die mit `<-- prüfen!` markierten Segmente. Ist die Länge falsch, passt du `max_pause`, `tempo`,
+   `pause` und `gap` an. Das geht ohne Neugenerieren in Sekunden. Laufe nicht weiter, bevor die
+   Länge passt.
 4. **Untertitel einsetzen:** `python3 -I .claude/skills/was-waere-wenn-video/scripts/captions.py videos/NN-slug`.
    Das schreibt den Hook und die Untertitel aus `timing.json` in `index.html`.
 5. **Cues und Szene:** Leite die Sync-Punkte (`#cues` in `index.html`) aus den Wortzeiten ab:

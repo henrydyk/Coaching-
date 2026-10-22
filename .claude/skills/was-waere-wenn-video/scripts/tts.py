@@ -12,6 +12,10 @@ Engines ("engine" in script.json):
   "candidates", Standard 3), und die beste gewinnt. Der Worker rechnet parallel auf allen Kernen. Setup:
   bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh
 - "edge": Microsoft-Neural-Stimmen über edge-tts ("voice", "rate", "pitch", "volume").
+
+Länge ohne Neugenerieren anpassen: "max_pause" (Sekunden, global/Beat/Segment) kürzt Pausen innerhalb
+der Aufnahmen, "tempo" (z. B. 1.1) beschleunigt das ganze Voiceover, "pause"/"gap" steuern die Stille
+zwischen Sätzen. Alle drei wirken nur beim Zusammensetzen, der Cache bleibt gültig.
 """
 import asyncio, difflib, hashlib, json, os, re, subprocess, sys, wave
 
@@ -37,6 +41,29 @@ def silence(cache, seconds):
     if not os.path.exists(path):
         run(["ffmpeg", "-y", "-f", "lavfi", "-i", f"anullsrc=r={SR}:cl=mono", "-t", f"{seconds:.3f}", path])
     return path
+
+
+def cap_pauses(src, dst, cap, thr_db=-40.0):
+    """Pausen innerhalb einer Aufnahme auf "cap" Sekunden kürzen (Anfang/Ende bleiben). Geschnitten wird
+    nur in Stille unter thr_db, Klang und Betonung der Stimme bleiben unverändert."""
+    import numpy as np
+    with wave.open(src) as w:
+        sr, x = w.getframerate(), np.frombuffer(w.readframes(w.getnframes()), np.int16)
+    hop = sr // 100
+    n = len(x) // hop
+    rms = np.sqrt(np.mean((x[:n * hop].astype(np.float32) / 32768).reshape(n, hop) ** 2, axis=1) + 1e-12)
+    silent = 20 * np.log10(rms) < thr_db
+    keep, capf, i = np.ones(len(x), bool), int(round(cap * 100)), 0
+    while i < n:
+        j = i
+        while j < n and silent[j]:
+            j += 1
+        if j - i > capf and i > 0 and j < n:
+            keep[(i + capf // 2) * hop:(j - (capf - capf // 2)) * hop] = False
+        i = max(j, i + 1)
+    with wave.open(dst, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr)
+        w.writeframes(x[keep].tobytes())
 
 
 def lufs(path):
@@ -178,7 +205,8 @@ def main(video_dir):
             get = lambda k, d: seg.get(k, beat.get(k, cfg.get(k, d)))
             s = {"text": seg["text"], "gap": float(seg.get("gap", 0.3)), "voice": voice,
                  "rate": get("rate", "+0%"), "pitch": get("pitch", "+0Hz"), "volume": get("volume", "+0%"),
-                 "ex": float(get("exaggeration", 0.85)), "cfg": float(get("cfg", 0.3)), "speed": float(get("speed", 1.0))}
+                 "ex": float(get("exaggeration", 0.85)), "cfg": float(get("cfg", 0.3)), "speed": float(get("speed", 1.0)),
+                 "max_pause": get("max_pause", None)}
             sig = (f"{engine}|{voice}|{s['rate']}|{s['pitch']}|{s['volume']}" if engine == "edge"
                    else f"{engine}|{cfg.get('voice_ref', 'thorsten')}|{s['ex']}|{s['cfg']}|{s['speed']}")
             s["key"] = f"{beat['id']}-{j}-" + hashlib.sha1(f"{sig}|{s['text']}".encode()).hexdigest()[:12]
@@ -199,8 +227,13 @@ def main(video_dir):
     for beat, segs in plan:
         beat_start = t
         for j, s in enumerate(segs):
-            parts.append(s["wav"])
-            t += wav_duration(s["wav"])
+            src = s["wav"]
+            if s["max_pause"]:  # lange Atem-/Denkpausen kürzen, ohne neu zu generieren
+                src = s["wav"][:-4] + f"-p{int(float(s['max_pause']) * 1000)}.wav"
+                if not os.path.exists(src):
+                    cap_pauses(s["wav"], src, float(s["max_pause"]))
+            parts.append(src)
+            t += wav_duration(src)
             if j < len(segs) - 1:
                 parts.append(silence(cache, s["gap"]))
                 t += s["gap"]
@@ -214,7 +247,13 @@ def main(video_dir):
         f.writelines(f"file '{os.path.abspath(p)}'\n" for p in parts)
     vo = os.path.join(out_dir, "voiceover.wav")
     raw = os.path.join(cache, "voiceover-raw.wav")
-    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst, "-ac", "1", "-ar", str(SR), raw])
+    # "tempo": das ganze Voiceover gleichmäßig beschleunigen (atempo, Tonhöhe bleibt); Timing wird mitskaliert
+    tempo = float(cfg.get("tempo", 1.0))
+    run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lst] + (["-af", f"atempo={tempo}"] if tempo != 1.0 else [])
+        + ["-ac", "1", "-ar", str(SR), raw])
+    if tempo != 1.0:
+        t /= tempo
+        timing = [{**b, "start": round(b["start"] / tempo, 3), "end": round(b["end"] / tempo, 3)} for b in timing]
     # Klangfarbe: "cinematic" = Wärme, Präsenz, Kompression, kleiner Raum (Erzähler-Sound)
     fx = VOICE_FX.get(cfg.get("voice_fx", "none"), "")
     shaped = os.path.join(cache, "voiceover-fx.wav")
