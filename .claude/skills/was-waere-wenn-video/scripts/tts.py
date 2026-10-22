@@ -119,7 +119,9 @@ def synth_chatterbox(segs, cfg, cache):
             raw = subprocess.run(["ffmpeg", "-v", "error", "-i", c, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
                                  stdin=subprocess.DEVNULL, capture_output=True, check=True).stdout
             a = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
-            txt = " ".join(seg.text for seg in asr.transcribe(a, language="de")[0])
+            # greedy (beam 1) reicht für den Textabgleich und ist ca. 3x schneller als die Standard-Beamsuche
+            segs_, _ = asr.transcribe(a, language="de", beam_size=1, condition_on_previous_text=False, without_timestamps=True)
+            txt = " ".join(seg.text for seg in segs_)
             score = difflib.SequenceMatcher(None, norm_words(txt), norm_words(s["text"])).ratio()
             s["scored"][k] = (score, len(a) / 16000, c, txt.strip())
 
