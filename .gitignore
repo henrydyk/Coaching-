@@ -1,5 +1,7 @@
-node_modules/
+*.log
 .hyperframes/
 .tts-cache/
+.venv-chatterbox/
+node_modules/
 renders/
-*.log
+__pycache__/
