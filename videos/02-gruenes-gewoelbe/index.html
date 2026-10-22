@@ -31,6 +31,7 @@
 
       #vignette { position: absolute; inset: 0; opacity: 0.8; background: radial-gradient(ellipse 80% 70% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.6) 100%); }
       #dim { position: absolute; inset: 0; opacity: 0; background: rgba(6, 8, 12, 0.55); }
+      #flash { position: absolute; inset: 0; opacity: 0; background: #ffffff; }
 
       /* Überwachungskamera-Look */
       #cctv { position: absolute; inset: 0; opacity: 0; }
@@ -53,6 +54,7 @@
 
       #hook { position: absolute; left: 0; right: 0; top: 560px; display: flex; justify-content: center; }
       #hook p { margin: 0; max-width: 900px; text-align: center; font: 400 78px/1.12 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
+      #hook .hk { display: inline-block; transform-origin: 50% 60%; }
       .cap { position: absolute; left: 0; right: 0; top: 1110px; display: flex; justify-content: center; opacity: 0; }
       .cap p { margin: 0; max-width: 880px; text-align: center; font: italic 400 58px/1.18 "Newsreader"; color: var(--text); text-shadow: var(--shadow); }
 
@@ -74,6 +76,7 @@
         <div id="vignette"></div>
         <div id="cctv"><div class="lines"></div><div class="frame"></div><div class="rec"><span class="dot"></span>REC</div><div class="cam">KAMERA · JUWELENZIMMER</div></div>
         <div id="dim"></div>
+        <div id="flash"></div>
 
         <div id="hud">
           <div class="hud-tag">ECHTE RAUBZÜGE #1 · REKONSTRUKTION</div>
@@ -128,15 +131,7 @@
     </div>
 
     <script id="cues" type="application/json">
-      {
-        "s2": 4.99, "s3": 7.02, "s4": 10.79, "s5": 12.54, "s6": 15.76, "s7": 18.09, "s8": 21.03, "s9": 23.46,
-        "s10": 27.39, "s11": 31.29, "s12": 33.41, "s13": 36.17, "s14": 38.94, "s15": 41.23, "s16": 43.75,
-        "s17": 47.30, "s18": 49.20, "s18b": 51.35, "end": 54.55,
-        "hudIn": 4.99, "gridCut": 7.64, "gridOut": 8.95, "gridBack": 9.6, "fireBox": 13.42, "lightsOut": 16.4,
-        "entry": 18.76, "hits": [21.78, 22.24, 22.78, 23.1], "grabStart": 24.1, "grabEnd": 26.9,
-        "police": 31.42, "tooLate": 33.52, "powder": 33.6, "garageFire": 37.34, "spread": 38.0,
-        "raid": 41.36, "fade": 53.6
-      }
+      {"s2": 7.59, "s3": 9.62, "s4": 13.39, "s5": 15.14, "s6": 18.36, "s7": 20.69, "s8": 23.63, "s9": 26.06, "s10": 29.99, "s11": 33.89, "s12": 36.01, "s13": 38.77, "s14": 41.54, "s15": 43.83, "s16": 46.35, "s17": 49.9, "s18": 51.8, "s18b": 53.95, "end": 57.15, "gridCut": 10.24, "gridOut": 11.55, "gridBack": 12.2, "fireBox": 16.02, "lightsOut": 19.0, "entry": 21.36, "hits": [24.38, 24.84, 25.38, 25.7], "grabStart": 26.7, "grabEnd": 29.5, "police": 34.02, "tooLate": 36.12, "powder": 36.2, "garageFire": 39.94, "spread": 40.6, "raid": 43.96, "fade": 56.2, "s1": 3.6, "hookHit": 1.4}
     </script>
     <script>
       const C = JSON.parse(document.getElementById("cues").textContent);
@@ -144,6 +139,10 @@
 
       const hook = document.getElementById("hook");
       if (hook) tl.fromTo("#hook p", { opacity: 1, y: 0 }, { opacity: 0, y: -12, duration: 0.3, ease: "power2.in" }, +hook.dataset.out - 0.3);
+      // Punch je Hook-Teil, wenn er gesprochen wird (Cue "hookParts")
+      if (hook && C.hookParts) hook.querySelectorAll(".hk").forEach((el, i) => {
+        if (C.hookParts[i] !== undefined) tl.fromTo(el, { scale: 1 }, { scale: 1.1, duration: 0.08, ease: "power2.out", yoyo: true, repeat: 1 }, C.hookParts[i]);
+      });
 
       document.querySelectorAll(".cap").forEach((el) => {
         const tIn = +el.dataset.in, tOut = +el.dataset.out;
@@ -152,7 +151,10 @@
         tl.to(el, { opacity: 0, duration: 0.16, ease: "power1.in" }, tOut - 0.16);
       });
 
-      tl.to("#hud", { opacity: 1, duration: 0.4, ease: "power1.out" }, C.hudIn);
+      tl.set("#hud", { opacity: 1 }, 0); // HUD ab Frame 0: der Zähler rast schon im Hook
+      // Rückspulen: weißer Blitz, wenn die Geschichte "Tage vorher" beginnt
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.85, duration: 0.06 }, C.s2 - 0.06);
+      tl.to("#flash", { opacity: 0, duration: 0.45, ease: "power2.out" }, C.s2);
       document.querySelectorAll(".hud-delta").forEach((el) => {
         const tIn = +el.dataset.in, tOut = +el.dataset.out;
         tl.fromTo(el, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.3, ease: "power2.out" }, tIn);

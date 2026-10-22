@@ -1,195 +1,41 @@
 {
   "title": "Der Juwelenraub im Grünen Gewölbe (Echte Raubzüge #1)",
-  "voice": "de-DE-FlorianMultilingualNeural",
-  "rate": "+7%",
-  "pitch": "-2Hz",
+  "engine": "chatterbox",
+  "exaggeration": 0.85,
+  "cfg": 0.3,
+  "candidates": 2,
   "voice_fx": "cinematic",
-  "lead_in": 0.35,
+  "lead_in": 0.25,
   "beats": [
-    {
-      "id": "b1",
-      "role": "hook",
-      "caption": "Kurz vor 5 Uhr morgens verschwinden hier Juwelen für über 100 Millionen Euro.",
-      "say": [
-        {
-          "text": "Kurz vor fünf Uhr morgens …",
-          "gap": 0.3
-        },
-        "verschwinden hier Juwelen für über hundert Millionen Euro."
-      ],
-      "pause": 0.3
-    },
-    {
-      "id": "b2",
-      "role": "caption",
-      "caption": "Der Plan beginnt Tage vorher.",
-      "rate": "-2%",
-      "pause": 0.3
-    },
-    {
-      "id": "b3",
-      "role": "caption",
-      "caption": "Die Täter sägen ein Fenstergitter durch … und setzen es wieder ein.",
-      "say": [
-        {
-          "text": "Die Täter sägen ein Fenstergitter durch …",
-          "gap": 0.35
-        },
-        "und setzen es wieder ein."
-      ],
-      "pause": 0.3
-    },
-    {
-      "id": "b4",
-      "role": "caption",
-      "caption": "Niemand merkt etwas.",
-      "rate": "-8%",
-      "pitch": "-4Hz",
-      "pause": 0.45
-    },
-    {
-      "id": "b5",
-      "role": "caption",
-      "caption": "In der Tatnacht brennt an der Augustusbrücke ein Stromkasten.",
-      "pause": 0.25
-    },
-    {
-      "id": "b6",
-      "role": "caption",
-      "caption": "Rund ums Schloss gehen die Laternen aus.",
-      "pause": 0.45
-    },
-    {
-      "id": "b7",
-      "role": "caption",
-      "caption": "Zwei Männer steigen durchs Fenster ins Juwelenzimmer.",
-      "rate": "-2%",
-      "pause": 0.3
-    },
-    {
-      "id": "b8",
-      "role": "caption",
-      "caption": "Mit Äxten schlagen sie Löcher in die Vitrine.",
-      "rate": "+8%",
-      "pause": 0.3
-    },
-    {
-      "id": "b9",
-      "role": "caption",
-      "caption": "Sie erbeuten 21 Schmuckstücke mit 4.300 Diamanten.",
-      "say": "Sie erbeuten einundzwanzig Schmuckstücke mit viertausenddreihundert Diamanten.",
-      "pause": 0.4
-    },
-    {
-      "id": "b10",
-      "role": "caption",
-      "caption": "Der Wachdienst sieht alles auf den Kameras … und ruft die Polizei.",
-      "say": [
-        {
-          "text": "Der Wachdienst sieht alles auf den Kameras …",
-          "gap": 0.3
-        },
-        "und ruft die Polizei."
-      ],
-      "pause": 0.3
-    },
-    {
-      "id": "b11",
-      "role": "caption",
-      "caption": "04:59 Uhr.",
-      "say": "Vier Uhr neunundfünfzig.",
-      "rate": "-8%",
-      "pause": 0.45
-    },
-    {
-      "id": "b12",
-      "role": "caption",
-      "caption": "Zu spät. Die Täter sind schon wieder draußen.",
-      "say": [
-        {
-          "text": "Zu spät.",
-          "rate": "-6%",
-          "gap": 0.3
-        },
-        "Die Täter sind schon wieder draußen."
-      ],
-      "pause": 0.3
-    },
-    {
-      "id": "b13",
-      "role": "caption",
-      "caption": "In einer Tiefgarage zünden sie ihr Fluchtauto an.",
-      "pause": 0.35
-    },
-    {
-      "id": "b14",
-      "role": "caption",
-      "caption": "Dann … sind sie verschwunden.",
-      "say": [
-        {
-          "text": "Dann …",
-          "rate": "-8%",
-          "gap": 0.35
-        },
-        {
-          "text": "sind sie verschwunden.",
-          "rate": "-8%",
-          "pitch": "-4Hz"
-        }
-      ],
-      "pause": 0.45
-    },
-    {
-      "id": "b15",
-      "role": "caption",
-      "caption": "Ein Jahr später: Festnahmen in Berlin.",
-      "rate": "+6%",
-      "pause": 0.3
-    },
-    {
-      "id": "b16",
-      "role": "caption",
-      "caption": "2022 taucht ein Großteil der Beute wieder auf.",
-      "say": "Zweitausendzweiundzwanzig taucht ein Großteil der Beute wieder auf.",
-      "pause": 0.3
-    },
-    {
-      "id": "b17",
-      "role": "caption",
-      "caption": "Fünf Männer werden verurteilt.",
-      "pause": 0.4
-    },
-    {
-      "id": "b18",
-      "role": "caption",
-      "caption": "Doch ein Diamant fehlt bis heute: der „Sächsische Weiße“. Fast 50 Karat.",
-      "say": [
-        {
-          "text": "Doch ein Diamant fehlt bis heute:",
-          "gap": 0.3
-        },
-        {
-          "text": "der Sächsische Weiße.",
-          "gap": 0.25
-        },
-        "Fast fünfzig Karat."
-      ],
-      "rate": "-4%",
-      "pitch": "-3Hz",
-      "pause": 0.5
-    },
-    {
-      "id": "b19",
-      "role": "endcard",
-      "caption": "Und wo ist er jetzt? Schreib deine Theorie in die Kommentare.",
-      "say": [
-        {
-          "text": "Und wo ist er jetzt?",
-          "gap": 0.35
-        },
-        "Schreib deine Theorie in die Kommentare."
-      ],
-      "pause": 0.2
-    }
+    { "id": "b1", "role": "hook", "caption": "Zwei Männer. Eine Axt. 113 Millionen Euro.",
+      "say": "Zwei Männer. Eine Axt. Hundertdreizehn Millionen Euro.", "exaggeration": 0.95, "pause": 0.3 },
+    { "id": "b2", "role": "caption", "caption": "Und ein Diamant mit fast 50 Karat ist bis heute verschwunden.",
+      "say": "Und ein Diamant mit fast fünfzig Karat ist bis heute verschwunden.", "pause": 0.35 },
+    { "id": "b3", "role": "caption", "caption": "Dresden. Alles beginnt Tage vorher.",
+      "say": [{ "text": "Dresden.", "gap": 0.25 }, "Alles beginnt Tage vorher."], "exaggeration": 0.7, "pause": 0.25 },
+    { "id": "b4", "role": "caption", "caption": "Die Täter sägen ein Fenstergitter durch … und setzen es wieder ein.",
+      "say": [{ "text": "Die Täter sägen ein Fenstergitter durch.", "gap": 0.3 }, "Und setzen es wieder ein."], "pause": 0.25 },
+    { "id": "b5", "role": "caption", "caption": "Niemand merkt etwas.", "exaggeration": 0.7, "pause": 0.35 },
+    { "id": "b6", "role": "caption", "caption": "In der Tatnacht brennt an der Augustusbrücke ein Stromkasten.", "pause": 0.2 },
+    { "id": "b7", "role": "caption", "caption": "Rund ums Schloss gehen die Laternen aus.", "pause": 0.3 },
+    { "id": "b8", "role": "caption", "caption": "Zwei Männer steigen durchs Fenster ins Juwelenzimmer.", "pause": 0.2 },
+    { "id": "b9", "role": "caption", "caption": "Mit Äxten schlagen sie Löcher in die Vitrine.", "exaggeration": 0.95, "pause": 0.25 },
+    { "id": "b10", "role": "caption", "caption": "Sie erbeuten 21 Schmuckstücke mit 4.300 Diamanten.",
+      "say": "Sie erbeuten einundzwanzig Schmuckstücke mit viertausenddreihundert Diamanten.", "pause": 0.3 },
+    { "id": "b11", "role": "caption", "caption": "Der Wachdienst sieht alles auf den Kameras … und ruft die Polizei.",
+      "say": [{ "text": "Der Wachdienst sieht alles auf den Kameras.", "gap": 0.25 }, "Und ruft die Polizei."], "pause": 0.25 },
+    { "id": "b12", "role": "caption", "caption": "04:59 Uhr.", "say": "Es ist vier Uhr neunundfünfzig.", "pause": 0.3 },
+    { "id": "b13", "role": "caption", "caption": "Zu spät. Die Täter sind schon wieder draußen.",
+      "say": [{ "text": "Zu spät.", "gap": 0.3 }, "Die Täter sind schon wieder draußen."], "exaggeration": 0.95, "pause": 0.25 },
+    { "id": "b14", "role": "caption", "caption": "In einer Tiefgarage zünden sie ihr Fluchtauto an.", "pause": 0.3 },
+    { "id": "b15", "role": "caption", "caption": "Dann … sind sie verschwunden.", "say": "Dann sind sie verschwunden.", "exaggeration": 0.7, "cfg": 0.25, "pause": 0.5 },
+    { "id": "b16", "role": "caption", "caption": "Ein Jahr später: Festnahmen in Berlin.", "pause": 0.25 },
+    { "id": "b17", "role": "caption", "caption": "2022 taucht ein Großteil der Beute wieder auf.",
+      "say": "Zweitausendzweiundzwanzig taucht ein Großteil der Beute wieder auf.", "pause": 0.25 },
+    { "id": "b18", "role": "caption", "caption": "Fünf Männer werden verurteilt.", "pause": 0.35 },
+    { "id": "b19", "role": "caption", "caption": "Doch der „Sächsische Weiße“ … fehlt bis heute.",
+      "say": [{ "text": "Doch der Sächsische Weiße.", "gap": 0.35 }, "Fehlt bis heute."], "exaggeration": 0.95, "pause": 0.4 },
+    { "id": "b20", "role": "endcard", "caption": "Und wo ist er jetzt? Schreib deine Theorie in die Kommentare.",
+      "say": [{ "text": "Und wo ist er jetzt?", "gap": 0.3 }, "Schreib deine Theorie in die Kommentare."], "pause": 0.2 }
   ]
 }

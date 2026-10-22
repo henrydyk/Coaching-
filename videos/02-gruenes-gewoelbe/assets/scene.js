@@ -50,7 +50,7 @@ const LIT = { ...ROOM, hemiSky: "#fff2dc", hemiGround: "#3a2c20", hemiI: 1.05, s
 const VOID = { ...ROOM, hemiI: 0.15, fog: "#000000" };
 // [Startzeit, Stimmung, Himmel sichtbar?]
 const MOODS = [
-  [0, NIGHT, true], [C.s2, DAY, true], [C.s3, NIGHT, true], [C.s4, DAY, true], [C.s5, NIGHT, true],
+  [0, ROOM, false], [C.s1, VOID, false], [C.s2, DAY, true], [C.s3, NIGHT, true], [C.s4, DAY, true], [C.s5, NIGHT, true],
   [C.s8, ROOM, false], [C.s11, NIGHT, true], [C.s13, GARAGE, false], [C.s14, ROOM, false],
   [C.s15, BERLIN, true], [C.s16, LIT, false], [C.s18b, VOID, false],
 ];
@@ -665,8 +665,10 @@ const dust = Array.from({ length: 30 }, () => { const s = K.makeGlow("#8fb4ff", 
 const jw = (x, y, z) => [J.x + x, J.y + y, J.z + z];
 const at = (base, x, y, z) => [base.x + x, base.y + y, base.z + z];
 const rig = new K.CameraRig([
-  { t0: 0, t1: C.s2 - 0.02, from: { pos: [30, 38, 235], tgt: [-5, 14, -10] }, to: { pos: [18, 30, 195], tgt: [-12, 14, -14] }, fov: 52 },
-  { t0: C.s2, t1: C.s3 - 0.02, from: { pos: [-112, 3.2, -16], tgt: [-90, 2.8, -25] }, to: { pos: [-106, 3.0, -19], tgt: [-90, 2.6, -25] }, fov: 50 },
+  // Hook: von hinter der Vitrine durchs Glas auf die beiden Täter, Juwelen im Vordergrund
+  { t0: 0, t1: C.s1 - 0.02, from: { pos: jw(0.05, 1.1, -3.0), tgt: jw(-0.15, 1.85, 1.2) }, to: { pos: jw(-0.05, 1.12, -2.5), tgt: jw(-0.2, 1.82, 1.2) }, fov: 50 },
+  { t0: C.s1, t1: C.s2 - 0.02, from: { pos: at(VD, 0, 2.0, 7.8), tgt: at(VD, 0, 1.5, 0) }, to: { pos: at(VD, 0, 1.95, 6.6), tgt: at(VD, 0, 1.5, 0) }, fov: 45 },
+  { t0: C.s2, t1: C.s3 - 0.02, from: { pos: [30, 38, 235], tgt: [-5, 14, -10] }, to: { pos: [18, 30, 195], tgt: [-12, 14, -14] }, fov: 52 },
   { t0: C.s3, t1: C.s4 - 0.02, from: { pos: [-92.9, 1.7, -21.4], tgt: [-90.2, 1.9, -24.8] }, to: { pos: [-92.5, 1.75, -21.9], tgt: [-90.2, 1.9, -24.8] }, fov: 52 },
   { t0: C.s4, t1: C.s5 - 0.02, from: { pos: [-120, 5, 6], tgt: [-90, 2.8, -25] }, to: { pos: [-118, 5, 2], tgt: [-90, 2.8, -26] }, fov: 50 },
   { t0: C.s5, t1: C.s6 - 0.02, from: { pos: [-4.5, 1.4, 30.5], tgt: [-10, 1.1, 36] }, to: { pos: [-5.2, 1.5, 31.2], tgt: [-10, 1.2, 36] }, fov: 52 },
@@ -683,7 +685,7 @@ const rig = new K.CameraRig([
   { t0: C.s16, t1: C.s17 - 0.02, from: { pos: at(E, 0, 3.0, 2.2), tgt: at(E, 0, 0.9, 0) }, to: { pos: at(E, 0.2, 2.2, 1.4), tgt: at(E, 0, 0.9, -0.1) }, fov: 50 },
   { t0: C.s17, t1: C.s18 - 0.02, from: { pos: at(CT, 0.5, 2.0, 7.5), tgt: at(CT, 0, 2.2, -5) }, to: { pos: at(CT, 0.3, 2.0, 6.0), tgt: at(CT, 0, 2.2, -5) }, fov: 50 },
   { t0: C.s18, t1: C.s18b - 0.02, from: { pos: jw(-1.0, 1.85, 1.45), tgt: jw(-0.9, 1.02, 0) }, to: { pos: jw(-0.95, 1.6, 0.95), tgt: jw(-0.9, 1.02, 0) }, fov: 46 },
-  { t0: C.s18b, t1: C.end - 0.02, from: { pos: at(VD, 0, 2.4, 5.5), tgt: at(VD, 0, 2.2, 0) }, to: { pos: at(VD, 0, 2.3, 4.2), tgt: at(VD, 0, 2.2, 0) }, fov: 45 },
+  { t0: C.s18b, t1: C.end - 0.02, from: { pos: at(VD, 0, 2.2, 8.0), tgt: at(VD, 0, 1.5, 0) }, to: { pos: at(VD, 0, 2.1, 6.6), tgt: at(VD, 0, 1.5, 0) }, fov: 45 },
   { t0: C.end, t1: 60, from: { pos: at(VD, 0, 2.6, 4.6), tgt: at(VD, 0, 2.2, 0) }, to: { pos: at(VD, 0, 2.6, 5.4), tgt: at(VD, 0, 2.2, 0) }, fov: 45 },
 ]);
 
@@ -696,14 +698,14 @@ const lastHit = (t) => { let h = null; for (const x of HITS) if (t >= x - 0.3) h
 const robbed = (i, t) => t >= C.grabStart + (i / 21) * (C.grabEnd - C.grabStart);
 
 function updateWorld(t) {
-  const inCity = t < C.s8 || between(t, C.s11, C.s13);
-  city.visible = inCity;
-  room.visible = between(t, C.s8, C.s11) || between(t, C.s14, C.s15) || between(t, C.s18, C.s18b);
+  const ff = t < C.s1; // Flash-Forward im Hook: der Axthieb in Zeitlupe
+  city.visible = between(t, C.s2, C.s8) || between(t, C.s11, C.s13);
+  room.visible = ff || between(t, C.s8, C.s11) || between(t, C.s14, C.s15) || between(t, C.s18, C.s18b);
   garage.visible = between(t, C.s13, C.s14);
   berlin.visible = between(t, C.s15, C.s16);
   evidence.visible = between(t, C.s16, C.s17);
   court.visible = between(t, C.s17, C.s18);
-  voidSet.visible = t >= C.s18b;
+  voidSet.visible = between(t, C.s1, C.s2) || t >= C.s18b;
 
   // --- Gitter: sägen, herausnehmen, wieder einsetzen
   const sawing = between(t, C.gridCut, C.gridOut);
@@ -761,6 +763,16 @@ function updateWorld(t) {
   // --- Einstieg (S7), Tat im Zimmer (S8–S10), Flucht (S12)
   const inRoom = between(t, C.s8, C.s11);
   thieves.forEach((th, i) => {
+    if (ff) { // Zeitlupe: Täter 0 holt aus und trifft auf "Axt", Täter 1 leuchtet
+      th.root.visible = true;
+      const p = i === 0 ? { x: J.x - 0.7, z: J.z + 1.15 } : { x: J.x + 0.62, z: J.z + 1.3 };
+      place(th, p, Math.PI);
+      K.animateCharacter(th, { t, arm: i === 0 ? "chop" : "flare", armT: (t - C.hookHit) * 0.3, lean: 0.08, headPitch: 0.15 });
+      axes[i].visible = i === 0;
+      setFlashlight(torches[i], i === 0 ? 0.6 : 1);
+      torches[i].beam.material.opacity = 0; // Strahlkegel zeigt sonst direkt in die Kamera
+      return;
+    }
     let vis = false;
     if (between(t, C.s7, C.s8)) { // steigen durchs Fenster
       vis = true;
@@ -800,18 +812,18 @@ function updateWorld(t) {
 
   // --- Vitrine: Treffer, Löcher, Splitter
   const restored = t >= C.s18;
-  HITS.forEach((h, k) => { cracks[k].material.opacity = !restored && t >= h ? 1 : 0; });
-  glassShards.visible = !restored && t >= HITS[0];
+  HITS.forEach((h, k) => { cracks[k].material.opacity = ff ? (k === 0 && t >= C.hookHit ? 1 : 0) : !restored && t >= h && !ff ? 1 : 0; });
+  glassShards.visible = ff ? t >= C.hookHit : !restored && t >= HITS[0];
   if (glassShards.visible) {
     shardInfo.forEach((d, i) => {
-      const h = HITS[d.hit];
-      const dt = Math.max(0, t - h);
+      const h = ff ? (d.hit === 0 ? C.hookHit : 1e9) : HITS[d.hit];
+      const dt = Math.max(0, t - h) * (ff ? 0.3 : 1);
       const [hx, hy] = HIT_POINTS[d.hit];
       const tl = (d.v[1] + Math.sqrt(d.v[1] * d.v[1] + 2 * 9.8 * hy)) / 9.8;
       const tt = Math.min(dt, tl);
       const y = dt < tl ? hy + d.v[1] * tt - 4.9 * tt * tt : 0.01;
       v3.set(J.x + hx + d.v[0] * tt * 0.6, J.y + y, J.z + 0.6 + d.v[2] * tt * 0.6);
-      m4.compose(v3.sub(J), q.setFromEuler(e3.set(dt >= tl ? -Math.PI / 2 : d.rot + d.spin * tt, d.rot, 0)), s3.setScalar(t >= h ? d.s : 0.0001));
+      m4.compose(v3.sub(J), q.setFromEuler(e3.set(dt >= tl ? -Math.PI / 2 : d.rot + d.spin * tt, d.rot, 0)), s3.setScalar(t >= h ? d.s * (ff ? 1.6 : 1) : 0.0001));
       glassShards.setMatrixAt(i, m4);
     });
     glassShards.instanceMatrix.needsUpdate = true;
@@ -823,7 +835,9 @@ function updateWorld(t) {
     j.visible = vis;
     j.userData.glint.material.opacity = 0.5 + 0.5 * Math.sin(t * 6 + j.userData.ph);
   });
-  const alarm = (t >= HITS[0] && t < C.s15) ? (Math.sin(t * 8) > 0 ? 1 : 0) : 0;
+  // im Hook leuchtet das Mondlicht aus der Vitrine von unten in die Gesichter
+  if (ff) { moon.position.set(0.2, 1.35, -0.2); moon.intensity = 9; } else { moon.position.set(-5.8, 2.6, 1.5); moon.intensity = 6; }
+  const alarm = ((ff && t >= C.hookHit) || (t >= HITS[0] && t < C.s15)) ? (Math.sin(t * 8) > 0 ? 1 : 0) : 0;
   alarmLight.intensity = 14 * alarm;
   alarmLamp.material.opacity = alarm;
   museumLights.forEach((l) => { l.intensity = restored ? 14 : 0; });
@@ -875,7 +889,7 @@ function updateWorld(t) {
   if (voidSet.visible) {
     bigDiamond.rotation.y = t * 0.6;
     bigDiamond.rotation.x = 0.35 + Math.sin(t * 0.7) * 0.1;
-    const fade = 1 - 0.7 * K.ramp(t, C.fade, C.fade + 0.8);
+    const fade = t < C.s2 ? 1 : 1 - 0.7 * K.ramp(t, C.fade, C.fade + 0.8);
     bigDiamond.material.opacity = fade;
     sparkleLights.forEach((l, i) => {
       const a = t * (0.8 + i * 0.3) + i * 2;
@@ -907,7 +921,11 @@ function updateHud(t) {
   const n = jewels.reduce((a, _, i) => a + (robbed(i, t) ? 1 : 0), 0);
   const value = t >= C.grabEnd ? 113800000 : Math.round((113800000 / 21) * n * (0.85 + 0.15 * Math.sin(n * 7.3) ** 2) / 1000) * 1000;
   hudNum.textContent = `${K.formatDE(Math.min(value, 113800000))} €`;
-  if (t < C.s5) hudSub.textContent = "DRESDEN · RESIDENZSCHLOSS";
+  if (t < C.s2) {
+    const v = t < C.s1 ? 113800000 * K.easeOutCubic(K.clamp((t - C.hookHit) / 1.4)) : 113800000;
+    hudNum.textContent = `${K.formatDE(Math.round(v / 1000) * 1000)} €`;
+    hudSub.textContent = t < C.s1 ? "DRESDEN · 25. NOVEMBER 2019" : "„SÄCHSISCHER WEISSER“ · VERSCHOLLEN";
+  } else if (t < C.s5) hudSub.textContent = "DRESDEN · RESIDENZSCHLOSS";
   else if (t < C.grabStart) hudSub.textContent = "25. NOVEMBER 2019 · KURZ VOR 5 UHR";
   else if (t < C.grabEnd) hudSub.textContent = `SCHMUCKSTÜCKE ${n} / 21`;
   else hudSub.textContent = "21 SCHMUCKSTÜCKE · 4.300 DIAMANTEN";
