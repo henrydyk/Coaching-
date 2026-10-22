@@ -18,6 +18,24 @@ export HYPERFRAMES_BROWSER_PATH=$(ls /opt/pw-browsers/chromium_headless_shell-*/
 - Die eingebaute HyperFrames-TTS (Kokoro) kann **kein Deutsch**. Deshalb nutzen wir Chatterbox
   (Standard) bzw. edge-tts (schneller Entwurf).
 
+## Stimme: ElevenLabs (wenn ELEVENLABS_API_KEY gesetzt ist)
+
+Der Nutzer fand Chatterbox/Thorsten zu englisch klingend („komischer Akzent“). ElevenLabs mit einer
+**deutschen Muttersprachler-Stimme** aus der Voice Library behebt das. Die vorgefertigten Stimmen
+(Roger, Sarah …) sind englische Sprecher und haben denselben Akzent-Effekt, also nicht nehmen.
+
+- Schlüssel nur als Umgebungsvariable `ELEVENLABS_API_KEY` (Umgebungseinstellungen → Network secrets),
+  nie in Dateien oder im Chat. Der Nutzer legt ihn an, eine neue Sitzung übernimmt ihn.
+- Stimme finden: `python3 -I scripts/el_voices.py list` (deutsche Erzähler, mit kostenlosen Vorschau-MP3s),
+  dann `python3 -I scripts/el_voices.py sample <ordner> <owner_id>:<voice_id> …` für Hörproben mit dem Hook.
+- `script.json`: `"engine": "elevenlabs"`, `"voice_id"`, `"el_model": "eleven_v3"`, `"stability"`
+  (v3: 0.0 kreativ / 0.5 natürlich / 1.0 stabil), optional `"style"`, `"el_speed"`. Emotion bei v3 über
+  Audio-Tags im `say`-Text: `[whispers]`, `[dramatic]`, `[excited]`, `[sighs]`. Whisper ignoriert die
+  Tags beim Abgleich, die Untertitel kommen ohnehin aus `caption`.
+- Ca. 1 Credit pro Zeichen: ein 60-s-Skript ≈ 900–1.000 Zeichen plus Wiederholungen. Dauer: unter 1 min.
+- **Lizenz:** Gratis-Plan = nicht kommerziell. Für monetarisierte Videos muss das Audio in einem
+  bezahlten Abo (ab Starter) erzeugt werden. Audio aus der Gratis-Zeit wird nicht nachträglich kommerziell.
+
 ## Stimme: Chatterbox (Standard)
 
 ```bash

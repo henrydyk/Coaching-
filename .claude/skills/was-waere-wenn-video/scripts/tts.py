@@ -11,6 +11,8 @@ Engines ("engine" in script.json):
   nur wenn Whisper den Text nicht sauber erkennt oder die Länge auffällt, folgen weitere Seeds (bis
   "candidates", Standard 3), und die beste gewinnt. Der Worker rechnet parallel auf allen Kernen. Setup:
   bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh
+- "elevenlabs": ElevenLabs-API mit deutscher Stimme ("voice_id", "el_model", "stability", "style",
+  "similarity", "el_speed"), Schlüssel aus ELEVENLABS_API_KEY. Gleiche Whisper-Qualitätsschleife.
 - "edge": Microsoft-Neural-Stimmen über edge-tts ("voice", "rate", "pitch", "volume").
 
 Länge ohne Neugenerieren anpassen: "max_pause" (Sekunden, global/Beat/Segment) kürzt Pausen innerhalb
@@ -119,12 +121,10 @@ def synth_edge(segs):
         run(["ffmpeg", "-y", "-i", mp3, "-af", TRIM.format(db=-50), "-ac", "1", "-ar", str(SR), s["wav"]])
 
 
-def synth_chatterbox(segs, cfg, cache):
-    root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
-    py = os.path.join(root, ".venv-chatterbox", "bin", "python")
-    if not os.path.exists(py):
-        sys.exit("Chatterbox fehlt: bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh")
-    ref = cfg.get("voice_ref", os.path.join(SKILL, "assets", "voices", "thorsten-ref.wav"))
+def synth_adaptive(segs, cfg, cache, generate, label):
+    """Gemeinsame Qualitätsschleife für Chatterbox und ElevenLabs: pro Segment zuerst eine Aufnahme,
+    Whisper prüft sie, nur unsaubere Segmente bekommen in der nächsten Runde einen neuen Seed.
+    generate(items) erzeugt die Dateien items[i]["out"] (items: text, seed, out, seg)."""
     max_cand = int(cfg.get("candidates", 3))
     todo = [s for s in segs if not os.path.exists(s["wav"])]
     if not todo:
@@ -149,7 +149,8 @@ def synth_chatterbox(segs, cfg, cache):
             # greedy (beam 1) reicht für den Textabgleich und ist ca. 3x schneller als die Standard-Beamsuche
             segs_, _ = asr.transcribe(a, language="de", beam_size=1, condition_on_previous_text=False, without_timestamps=True)
             txt = " ".join(seg.text for seg in segs_)
-            score = difflib.SequenceMatcher(None, norm_words(txt), norm_words(s["text"])).ratio()
+            spoken = re.sub(r"\[[^\]]*\]", " ", s["text"])  # ElevenLabs-Audio-Tags wie [whispers] werden nicht gesprochen
+            score = difflib.SequenceMatcher(None, norm_words(txt), norm_words(spoken)).ratio()
             s["scored"][k] = (score, len(a) / 16000, c, txt.strip())
 
     def best(s):  # beste Übereinstimmung, bei Gleichstand die kürzere Aufnahme
@@ -160,11 +161,9 @@ def synth_chatterbox(segs, cfg, cache):
     # ca. 1,2 statt 2 Aufnahmen pro Segment, ohne dass eine schlechte Aufnahme durchrutscht.
     open_ = list(todo)
     for k in range(max_cand):
-        items = [{"text": s["text"], "ex": s["ex"], "cfg": s["cfg"], "seed": k + 1, "out": s["cands"][k]} for s in open_]
-        job = os.path.join(cache, "chatterbox-job.json")
-        json.dump({"ref": ref, "items": items}, open(job, "w", encoding="utf-8"), ensure_ascii=False)
-        print(f"Chatterbox Runde {k + 1}: {len(items)} Segmente …", flush=True)
-        subprocess.run([py, os.path.join(SKILL, "scripts", "chatterbox_worker.py"), job], check=True)
+        items = [{"text": s["text"], "seed": k + 1, "out": s["cands"][k], "seg": s} for s in open_]
+        print(f"{label} Runde {k + 1}: {len(items)} Segmente …", flush=True)
+        generate([it for it in items if not os.path.exists(it["out"])])
         for s in todo:
             score_existing(s)
         rates = sorted(best(s)[1] / len(s["text"]) for s in todo if len(s["text"]) >= 15)
@@ -181,6 +180,68 @@ def synth_chatterbox(segs, cfg, cache):
         if s["speed"] != 1.0:
             af += f",atempo={s['speed']}"
         run(["ffmpeg", "-y", "-i", b[2], "-af", af, "-ac", "1", "-ar", str(SR), s["wav"]])
+
+
+def synth_chatterbox(segs, cfg, cache):
+    root = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+    py = os.path.join(root, ".venv-chatterbox", "bin", "python")
+    if not os.path.exists(py):
+        sys.exit("Chatterbox fehlt: bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh")
+    ref = cfg.get("voice_ref", os.path.join(SKILL, "assets", "voices", "thorsten-ref.wav"))
+
+    def generate(items):
+        if not items:
+            return
+        job = os.path.join(cache, "chatterbox-job.json")
+        payload = [{"text": it["text"], "ex": it["seg"]["ex"], "cfg": it["seg"]["cfg"], "seed": it["seed"], "out": it["out"]}
+                   for it in items]
+        json.dump({"ref": ref, "items": payload}, open(job, "w", encoding="utf-8"), ensure_ascii=False)
+        subprocess.run([py, os.path.join(SKILL, "scripts", "chatterbox_worker.py"), job], check=True)
+
+    synth_adaptive(segs, cfg, cache, generate, "Chatterbox")
+
+
+def synth_elevenlabs(segs, cfg, cache):
+    """ElevenLabs-API (Schlüssel aus der Umgebungsvariable ELEVENLABS_API_KEY, nie im Repo).
+    script.json: "voice_id" (Pflicht), "el_model" (Standard eleven_v3), pro Beat/Segment "stability",
+    "style", "similarity", "el_speed". Bei eleven_v3 steuern Audio-Tags im Text die Emotion, z. B.
+    "[whispers] Niemand merkt etwas." Kommerzielle Nutzung nur mit Audio aus einem bezahlten Abo."""
+    import ssl, urllib.error, urllib.request
+    from concurrent.futures import ThreadPoolExecutor
+    key = os.environ.get("ELEVENLABS_API_KEY")
+    if not key:
+        sys.exit("ELEVENLABS_API_KEY fehlt: in den Umgebungseinstellungen (Network secrets) anlegen, neue Sitzung starten.")
+    voice_id = cfg.get("voice_id") or sys.exit('"voice_id" fehlt in script.json (deutsche Stimme aus der Voice Library)')
+    model = cfg.get("el_model", "eleven_v3")
+    ca = "/root/.ccr/ca-bundle.crt"
+    ctx = ssl.create_default_context(cafile=ca if os.path.exists(ca) else None)
+
+    def one(it):
+        s = it["seg"]
+        settings = {"stability": float(s["stability"]), "similarity_boost": float(s["similarity"]),
+                    "style": float(s["style"]), "use_speaker_boost": True, "speed": float(s["el_speed"])}
+        body = {"text": it["text"], "model_id": model, "voice_settings": settings, "seed": int(it["seed"])}
+        if model == "eleven_multilingual_v2":  # Kontext für Übergänge; v3 unterstützt das (noch) nicht
+            body.update(previous_text=s.get("prev_text") or None, next_text=s.get("next_text") or None)
+        else:
+            body["language_code"] = "de"
+        req = urllib.request.Request(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}?output_format=mp3_44100_128",
+            data=json.dumps(body).encode(), headers={"xi-api-key": key, "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=180, context=ctx) as r:
+                data = r.read()
+        except urllib.error.HTTPError as e:
+            sys.exit(f"ElevenLabs {e.code}: {e.read().decode(errors='replace')[:400]}")
+        mp3 = it["out"][:-4] + ".mp3"
+        open(mp3, "wb").write(data)
+        run(["ffmpeg", "-y", "-i", mp3, "-ac", "1", "-ar", str(SR), it["out"]])
+
+    def generate(items):
+        with ThreadPoolExecutor(int(cfg.get("el_parallel", 2))) as ex:  # Gratis-Plan erlaubt 2 parallele Anfragen
+            list(ex.map(one, items))
+
+    synth_adaptive(segs, cfg, cache, generate, "ElevenLabs")
 
 
 def main(video_dir):
@@ -206,9 +267,13 @@ def main(video_dir):
             s = {"text": seg["text"], "gap": float(seg.get("gap", 0.3)), "voice": voice,
                  "rate": get("rate", "+0%"), "pitch": get("pitch", "+0Hz"), "volume": get("volume", "+0%"),
                  "ex": float(get("exaggeration", 0.85)), "cfg": float(get("cfg", 0.3)), "speed": float(get("speed", 1.0)),
-                 "max_pause": get("max_pause", None)}
-            sig = (f"{engine}|{voice}|{s['rate']}|{s['pitch']}|{s['volume']}" if engine == "edge"
-                   else f"{engine}|{cfg.get('voice_ref', 'thorsten')}|{s['ex']}|{s['cfg']}|{s['speed']}")
+                 "max_pause": get("max_pause", None), "stability": float(get("stability", 0.5)),
+                 "style": float(get("style", 0.0)), "similarity": float(get("similarity", 0.75)),
+                 "el_speed": float(get("el_speed", 1.0))}
+            sig = {"edge": f"{engine}|{voice}|{s['rate']}|{s['pitch']}|{s['volume']}",
+                   "elevenlabs": f"{engine}|{cfg.get('voice_id')}|{cfg.get('el_model', 'eleven_v3')}|{s['stability']}|"
+                                 f"{s['style']}|{s['similarity']}|{s['el_speed']}|{s['speed']}"}.get(
+                engine, f"{engine}|{cfg.get('voice_ref', 'thorsten')}|{s['ex']}|{s['cfg']}|{s['speed']}")
             s["key"] = f"{beat['id']}-{j}-" + hashlib.sha1(f"{sig}|{s['text']}".encode()).hexdigest()[:12]
             s["wav"] = os.path.join(cache, s["key"] + ".wav")
             segs.append(s)
@@ -216,8 +281,13 @@ def main(video_dir):
     all_segs = [s for _, segs in plan for s in segs]
 
     # 2) Synthese
+    for i, s in enumerate(all_segs):  # Nachbartext hilft ElevenLabs bei Betonung und Übergängen
+        s["prev_text"] = all_segs[i - 1]["text"] if i else ""
+        s["next_text"] = all_segs[i + 1]["text"] if i + 1 < len(all_segs) else ""
     if engine == "chatterbox":
         synth_chatterbox(all_segs, cfg, cache)
+    elif engine == "elevenlabs":
+        synth_elevenlabs(all_segs, cfg, cache)
     else:
         synth_edge(all_segs)
 
@@ -261,7 +331,8 @@ def main(video_dir):
     # Stimme auf -16 LUFS (TikTok-üblich) bringen, linear
     gain = float(cfg.get("vo_lufs", -16.0)) - lufs(shaped)
     run(["ffmpeg", "-y", "-i", shaped, "-af", f"volume={gain:.2f}dB,alimiter=limit=0.89", "-ar", str(SR), vo])
-    label = voice if engine == "edge" else f"chatterbox/{os.path.basename(cfg.get('voice_ref', 'thorsten-ref.wav'))}"
+    label = {"edge": voice, "elevenlabs": f"elevenlabs/{cfg.get('voice_id')}/{cfg.get('el_model', 'eleven_v3')}"}.get(
+        engine, f"chatterbox/{os.path.basename(cfg.get('voice_ref', 'thorsten-ref.wav'))}")
     json.dump({"voice": label, "total": round(t, 3), "beats": timing},
               open(os.path.join(video_dir, "timing.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     for b in timing:

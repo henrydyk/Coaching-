@@ -95,6 +95,8 @@ Referenzbeispiel ist `videos/01-keine-regeln/`: Szene, HUD, Sound und Endcard si
 | `template/assets/scene.js` | Startgerüst einer Szene |
 | `scripts/tts.py` | Chatterbox (Standard: Thorsten, `exaggeration`/`cfg` pro Beat/Segment, Kandidaten mit Whisper-Auswahl) oder edge-tts; `voice_fx: cinematic`, Pausen, Stille getrimmt, LUFS-normalisiert |
 | `scripts/words.py` | Wortzeitstempel des Voiceovers (Whisper) für Cues |
+| `scripts/el_voices.py` | deutsche ElevenLabs-Erzählerstimmen finden und Hörproben erzeugen (`engine: "elevenlabs"`) |
+| `scripts/orpheus_worker.py` | Test-Worker für Kartoffel Orpheus (deutsches Orpheus-3B, llama.cpp), noch nicht in `tts.py` eingebunden |
 | `assets/voices/` | Stimmvorlagen (Thorsten, CC0) |
 | `scripts/captions.py` | Hook und Untertitel aus `timing.json` in `index.html` schreiben |
 | `scripts/sounddesign.py` | synthetischer Klangteppich (dusk/night/tension/dawn/wonder) mit Lautstärke-Automation (`bed_gain`) plus Effekte (u. a. Sirene, Glas, Klopfen, Zünden, Feuer-Wumms, Schritte, Herzschlag), Ducking unter der Stimme |
