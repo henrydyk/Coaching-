@@ -1,0 +1,747 @@
+[
+ {
+  "w": "Zwei",
+  "start": 0.0,
+  "end": 0.58
+ },
+ {
+  "w": "Männer,",
+  "start": 0.58,
+  "end": 0.86
+ },
+ {
+  "w": "eine",
+  "start": 1.08,
+  "end": 1.26
+ },
+ {
+  "w": "Axt",
+  "start": 1.26,
+  "end": 1.58
+ },
+ {
+  "w": "113",
+  "start": 1.58,
+  "end": 2.44
+ },
+ {
+  "w": "Millionen",
+  "start": 2.44,
+  "end": 2.98
+ },
+ {
+  "w": "Euro",
+  "start": 2.98,
+  "end": 3.34
+ },
+ {
+  "w": "und",
+  "start": 3.34,
+  "end": 3.68
+ },
+ {
+  "w": "ein",
+  "start": 3.68,
+  "end": 3.98
+ },
+ {
+  "w": "Diamant",
+  "start": 3.98,
+  "end": 4.5
+ },
+ {
+  "w": "mit",
+  "start": 4.5,
+  "end": 4.72
+ },
+ {
+  "w": "fast",
+  "start": 4.72,
+  "end": 5.04
+ },
+ {
+  "w": "50",
+  "start": 5.04,
+  "end": 5.52
+ },
+ {
+  "w": "Karat",
+  "start": 5.52,
+  "end": 5.98
+ },
+ {
+  "w": "ist",
+  "start": 5.98,
+  "end": 6.22
+ },
+ {
+  "w": "bis",
+  "start": 6.22,
+  "end": 6.46
+ },
+ {
+  "w": "heute",
+  "start": 6.46,
+  "end": 6.68
+ },
+ {
+  "w": "verschwunden.",
+  "start": 6.68,
+  "end": 7.54
+ },
+ {
+  "w": "Dresden",
+  "start": 7.78,
+  "end": 8.26
+ },
+ {
+  "w": "Alles",
+  "start": 8.26,
+  "end": 8.68
+ },
+ {
+  "w": "beginnt",
+  "start": 8.68,
+  "end": 9.14
+ },
+ {
+  "w": "Tage",
+  "start": 9.14,
+  "end": 9.46
+ },
+ {
+  "w": "vorher.",
+  "start": 9.46,
+  "end": 9.86
+ },
+ {
+  "w": "Die",
+  "start": 10.08,
+  "end": 10.26
+ },
+ {
+  "w": "Täter",
+  "start": 10.26,
+  "end": 10.72
+ },
+ {
+  "w": "sägen",
+  "start": 10.72,
+  "end": 11.1
+ },
+ {
+  "w": "ein",
+  "start": 11.1,
+  "end": 11.36
+ },
+ {
+  "w": "Fenstergitter",
+  "start": 11.36,
+  "end": 11.92
+ },
+ {
+  "w": "durch",
+  "start": 11.92,
+  "end": 12.2
+ },
+ {
+  "w": "und",
+  "start": 12.2,
+  "end": 12.52
+ },
+ {
+  "w": "setzen",
+  "start": 12.52,
+  "end": 12.86
+ },
+ {
+  "w": "es",
+  "start": 12.86,
+  "end": 13.22
+ },
+ {
+  "w": "wieder",
+  "start": 13.22,
+  "end": 13.5
+ },
+ {
+  "w": "ein.",
+  "start": 13.5,
+  "end": 13.76
+ },
+ {
+  "w": "Niemand",
+  "start": 14.04,
+  "end": 14.42
+ },
+ {
+  "w": "merkt",
+  "start": 14.42,
+  "end": 14.82
+ },
+ {
+  "w": "etwas.",
+  "start": 14.82,
+  "end": 15.12
+ },
+ {
+  "w": "In",
+  "start": 15.4,
+  "end": 15.5
+ },
+ {
+  "w": "der",
+  "start": 15.5,
+  "end": 15.78
+ },
+ {
+  "w": "Tatnacht",
+  "start": 15.78,
+  "end": 16.28
+ },
+ {
+  "w": "brennt",
+  "start": 16.28,
+  "end": 16.64
+ },
+ {
+  "w": "an",
+  "start": 16.64,
+  "end": 16.8
+ },
+ {
+  "w": "der",
+  "start": 16.8,
+  "end": 16.96
+ },
+ {
+  "w": "Augustusbrücke",
+  "start": 16.96,
+  "end": 17.82
+ },
+ {
+  "w": "ein",
+  "start": 17.82,
+  "end": 18.12
+ },
+ {
+  "w": "Stromkasten.",
+  "start": 18.12,
+  "end": 18.72
+ },
+ {
+  "w": "Rund",
+  "start": 18.96,
+  "end": 19.26
+ },
+ {
+  "w": "ums",
+  "start": 19.26,
+  "end": 19.62
+ },
+ {
+  "w": "Schloss",
+  "start": 19.62,
+  "end": 19.92
+ },
+ {
+  "w": "gehen",
+  "start": 19.92,
+  "end": 20.2
+ },
+ {
+  "w": "die",
+  "start": 20.2,
+  "end": 20.44
+ },
+ {
+  "w": "Laternen",
+  "start": 20.44,
+  "end": 20.8
+ },
+ {
+  "w": "aus.",
+  "start": 20.8,
+  "end": 21.1
+ },
+ {
+  "w": "Zwei",
+  "start": 21.22,
+  "end": 21.56
+ },
+ {
+  "w": "Männer",
+  "start": 21.56,
+  "end": 21.8
+ },
+ {
+  "w": "steigen",
+  "start": 21.8,
+  "end": 22.18
+ },
+ {
+  "w": "durchs",
+  "start": 22.18,
+  "end": 22.46
+ },
+ {
+  "w": "Fenster",
+  "start": 22.46,
+  "end": 22.94
+ },
+ {
+  "w": "ins",
+  "start": 22.94,
+  "end": 23.18
+ },
+ {
+  "w": "Jubilenzimmer.",
+  "start": 23.18,
+  "end": 23.86
+ },
+ {
+  "w": "Mit",
+  "start": 23.96,
+  "end": 24.22
+ },
+ {
+  "w": "Äxten",
+  "start": 24.22,
+  "end": 24.72
+ },
+ {
+  "w": "schlagen",
+  "start": 24.72,
+  "end": 25.12
+ },
+ {
+  "w": "sie",
+  "start": 25.12,
+  "end": 25.32
+ },
+ {
+  "w": "Löcher",
+  "start": 25.32,
+  "end": 25.72
+ },
+ {
+  "w": "in",
+  "start": 25.72,
+  "end": 25.94
+ },
+ {
+  "w": "die",
+  "start": 25.94,
+  "end": 26.08
+ },
+ {
+  "w": "Vitrine.",
+  "start": 26.08,
+  "end": 26.44
+ },
+ {
+  "w": "Sie",
+  "start": 26.44,
+  "end": 27.08
+ },
+ {
+  "w": "erbeuten",
+  "start": 27.08,
+  "end": 27.66
+ },
+ {
+  "w": "21",
+  "start": 27.66,
+  "end": 28.6
+ },
+ {
+  "w": "Schmuckstücke",
+  "start": 28.6,
+  "end": 29.3
+ },
+ {
+  "w": "mit",
+  "start": 29.3,
+  "end": 29.64
+ },
+ {
+  "w": "4",
+  "start": 29.64,
+  "end": 30.16
+ },
+ {
+  "w": ".300",
+  "start": 30.16,
+  "end": 30.7
+ },
+ {
+  "w": "Diamanten.",
+  "start": 30.7,
+  "end": 31.28
+ },
+ {
+  "w": "Der",
+  "start": 31.46,
+  "end": 31.7
+ },
+ {
+  "w": "Wachdienst",
+  "start": 31.7,
+  "end": 32.3
+ },
+ {
+  "w": "sieht",
+  "start": 32.3,
+  "end": 32.56
+ },
+ {
+  "w": "alles",
+  "start": 32.56,
+  "end": 32.92
+ },
+ {
+  "w": "auf",
+  "start": 32.92,
+  "end": 33.16
+ },
+ {
+  "w": "den",
+  "start": 33.16,
+  "end": 33.4
+ },
+ {
+  "w": "Kameras",
+  "start": 33.4,
+  "end": 33.72
+ },
+ {
+  "w": "und",
+  "start": 33.72,
+  "end": 34.14
+ },
+ {
+  "w": "ruft",
+  "start": 34.14,
+  "end": 34.42
+ },
+ {
+  "w": "die",
+  "start": 34.42,
+  "end": 34.68
+ },
+ {
+  "w": "Polizei.",
+  "start": 34.68,
+  "end": 35.04
+ },
+ {
+  "w": "Es",
+  "start": 35.12,
+  "end": 35.34
+ },
+ {
+  "w": "ist",
+  "start": 35.34,
+  "end": 35.58
+ },
+ {
+  "w": "4",
+  "start": 35.58,
+  "end": 35.94
+ },
+ {
+  "w": ".59",
+  "start": 35.94,
+  "end": 37.0
+ },
+ {
+  "w": "Uhr.",
+  "start": 37.0,
+  "end": 37.0
+ },
+ {
+  "w": "Zu",
+  "start": 37.48,
+  "end": 37.82
+ },
+ {
+  "w": "spät.",
+  "start": 37.82,
+  "end": 38.18
+ },
+ {
+  "w": "Die",
+  "start": 38.32,
+  "end": 38.46
+ },
+ {
+  "w": "Täter",
+  "start": 38.46,
+  "end": 38.92
+ },
+ {
+  "w": "sind",
+  "start": 38.92,
+  "end": 39.2
+ },
+ {
+  "w": "schon",
+  "start": 39.2,
+  "end": 39.4
+ },
+ {
+  "w": "wieder",
+  "start": 39.4,
+  "end": 39.7
+ },
+ {
+  "w": "draußen.",
+  "start": 39.7,
+  "end": 40.04
+ },
+ {
+  "w": "In",
+  "start": 40.3,
+  "end": 40.36
+ },
+ {
+  "w": "einer",
+  "start": 40.36,
+  "end": 40.62
+ },
+ {
+  "w": "Tiefgarage",
+  "start": 40.62,
+  "end": 41.52
+ },
+ {
+  "w": "zünden",
+  "start": 41.52,
+  "end": 41.96
+ },
+ {
+  "w": "sie",
+  "start": 41.96,
+  "end": 42.16
+ },
+ {
+  "w": "ihr",
+  "start": 42.16,
+  "end": 42.42
+ },
+ {
+  "w": "Fluchtauto",
+  "start": 42.42,
+  "end": 42.98
+ },
+ {
+  "w": "an.",
+  "start": 42.98,
+  "end": 43.24
+ },
+ {
+  "w": "Dann",
+  "start": 43.3,
+  "end": 43.54
+ },
+ {
+  "w": "sind",
+  "start": 43.54,
+  "end": 43.76
+ },
+ {
+  "w": "sie",
+  "start": 43.76,
+  "end": 44.0
+ },
+ {
+  "w": "verschwunden.",
+  "start": 44.0,
+  "end": 44.7
+ },
+ {
+  "w": "Ein",
+  "start": 46.12,
+  "end": 46.26
+ },
+ {
+  "w": "Jahr",
+  "start": 46.26,
+  "end": 46.64
+ },
+ {
+  "w": "später",
+  "start": 46.64,
+  "end": 47.12
+ },
+ {
+  "w": "Festnahmen",
+  "start": 47.12,
+  "end": 47.96
+ },
+ {
+  "w": "in",
+  "start": 47.96,
+  "end": 48.22
+ },
+ {
+  "w": "Berlin.",
+  "start": 48.22,
+  "end": 48.58
+ },
+ {
+  "w": "2022",
+  "start": 49.76,
+  "end": 50.4
+ },
+ {
+  "w": "taucht",
+  "start": 50.4,
+  "end": 50.84
+ },
+ {
+  "w": "ein",
+  "start": 50.84,
+  "end": 51.08
+ },
+ {
+  "w": "Großteil",
+  "start": 51.08,
+  "end": 51.54
+ },
+ {
+  "w": "der",
+  "start": 51.54,
+  "end": 51.74
+ },
+ {
+  "w": "Beute",
+  "start": 51.74,
+  "end": 52.02
+ },
+ {
+  "w": "wieder",
+  "start": 52.02,
+  "end": 52.34
+ },
+ {
+  "w": "auf.",
+  "start": 52.34,
+  "end": 52.42
+ },
+ {
+  "w": "Fünf",
+  "start": 52.48,
+  "end": 52.84
+ },
+ {
+  "w": "Männer",
+  "start": 52.84,
+  "end": 53.08
+ },
+ {
+  "w": "werden",
+  "start": 53.08,
+  "end": 53.4
+ },
+ {
+  "w": "verurteilt.",
+  "start": 53.4,
+  "end": 54.0
+ },
+ {
+  "w": "Doch",
+  "start": 54.12,
+  "end": 54.36
+ },
+ {
+  "w": "der",
+  "start": 54.36,
+  "end": 54.62
+ },
+ {
+  "w": "Sächsische",
+  "start": 54.62,
+  "end": 55.12
+ },
+ {
+  "w": "weiße.",
+  "start": 55.12,
+  "end": 55.64
+ },
+ {
+  "w": "Er",
+  "start": 56.4,
+  "end": 57.04
+ },
+ {
+  "w": "fehlt",
+  "start": 57.04,
+  "end": 57.38
+ },
+ {
+  "w": "bis",
+  "start": 57.38,
+  "end": 57.7
+ },
+ {
+  "w": "heute.",
+  "start": 57.7,
+  "end": 58.14
+ },
+ {
+  "w": "Und",
+  "start": 59.12,
+  "end": 59.24
+ },
+ {
+  "w": "wo",
+  "start": 59.24,
+  "end": 59.56
+ },
+ {
+  "w": "ist",
+  "start": 59.56,
+  "end": 59.8
+ },
+ {
+  "w": "er",
+  "start": 59.8,
+  "end": 60.0
+ },
+ {
+  "w": "jetzt?",
+  "start": 60.0,
+  "end": 60.38
+ },
+ {
+  "w": "Schreib",
+  "start": 60.9,
+  "end": 61.16
+ },
+ {
+  "w": "deine",
+  "start": 61.16,
+  "end": 61.46
+ },
+ {
+  "w": "Theorie",
+  "start": 61.46,
+  "end": 62.0
+ },
+ {
+  "w": "in",
+  "start": 62.0,
+  "end": 62.22
+ },
+ {
+  "w": "die",
+  "start": 62.22,
+  "end": 62.38
+ },
+ {
+  "w": "Kommentare.",
+  "start": 62.38,
+  "end": 62.8
+ }
+]

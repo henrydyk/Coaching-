@@ -686,7 +686,7 @@ const rig = new K.CameraRig([
   { t0: C.s17, t1: C.s18 - 0.02, from: { pos: at(CT, 0.5, 2.0, 7.5), tgt: at(CT, 0, 2.2, -5) }, to: { pos: at(CT, 0.3, 2.0, 6.0), tgt: at(CT, 0, 2.2, -5) }, fov: 50 },
   { t0: C.s18, t1: C.s18b - 0.02, from: { pos: jw(-1.0, 1.85, 1.45), tgt: jw(-0.9, 1.02, 0) }, to: { pos: jw(-0.95, 1.6, 0.95), tgt: jw(-0.9, 1.02, 0) }, fov: 46 },
   { t0: C.s18b, t1: C.end - 0.02, from: { pos: at(VD, 0, 2.2, 8.0), tgt: at(VD, 0, 1.5, 0) }, to: { pos: at(VD, 0, 2.1, 6.6), tgt: at(VD, 0, 1.5, 0) }, fov: 45 },
-  { t0: C.end, t1: 60, from: { pos: at(VD, 0, 2.6, 4.6), tgt: at(VD, 0, 2.2, 0) }, to: { pos: at(VD, 0, 2.6, 5.4), tgt: at(VD, 0, 2.2, 0) }, fov: 45 },
+  { t0: C.end, t1: C.end + 6, from: { pos: at(VD, 0, 2.1, 6.6), tgt: at(VD, 0, 1.5, 0) }, to: { pos: at(VD, 0, 2.2, 7.6), tgt: at(VD, 0, 1.5, 0) }, fov: 45 },
 ]);
 
 // =====================================================================
