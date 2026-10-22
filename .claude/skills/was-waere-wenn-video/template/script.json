@@ -3,7 +3,7 @@
   "engine": "chatterbox",
   "exaggeration": 0.85,
   "cfg": 0.3,
-  "candidates": 2,
+  "candidates": 3,
   "voice_fx": "cinematic",
   "lead_in": 0.35,
   "beats": [

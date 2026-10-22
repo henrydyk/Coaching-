@@ -7,8 +7,9 @@ Schreibt <video-ordner>/assets/audio/voiceover.wav und <video-ordner>/timing.jso
 Engines ("engine" in script.json):
 - "chatterbox" (Standard für Erzähler): Chatterbox Multilingual (MIT) mit Stimmvorlage ("voice_ref",
   Standard: Thorsten, CC0). Emotion über "exaggeration" (0.25–1.0) und "cfg" (0.2–0.6, kleiner =
-  dramatischeres Tempo), global, pro Beat oder pro Segment. Pro Segment werden "candidates" Varianten
-  erzeugt; Whisper wählt die, deren Transkript am besten zum Text passt. Setup:
+  dramatischeres Tempo), global, pro Beat oder pro Segment. Pro Segment entsteht zuerst eine Aufnahme;
+  nur wenn Whisper den Text nicht sauber erkennt oder die Länge auffällt, folgen weitere Seeds (bis
+  "candidates", Standard 3), und die beste gewinnt. Der Worker rechnet parallel auf allen Kernen. Setup:
   bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh
 - "edge": Microsoft-Neural-Stimmen über edge-tts ("voice", "rate", "pitch", "volume").
 """
@@ -97,40 +98,60 @@ def synth_chatterbox(segs, cfg, cache):
     if not os.path.exists(py):
         sys.exit("Chatterbox fehlt: bash .claude/skills/was-waere-wenn-video/scripts/setup_chatterbox.sh")
     ref = cfg.get("voice_ref", os.path.join(SKILL, "assets", "voices", "thorsten-ref.wav"))
-    n_cand = int(cfg.get("candidates", 2))
+    max_cand = int(cfg.get("candidates", 3))
     todo = [s for s in segs if not os.path.exists(s["wav"])]
     if not todo:
         return
-    items = []
     for s in todo:
-        s["cands"] = [os.path.join(cache, f"{s['key']}-c{k}.wav") for k in range(n_cand)]
-        items += [{"text": s["text"], "ex": s["ex"], "cfg": s["cfg"], "seed": k + 1, "out": c} for k, c in enumerate(s["cands"])]
-    job = os.path.join(cache, "chatterbox-job.json")
-    json.dump({"ref": ref, "items": items}, open(job, "w", encoding="utf-8"), ensure_ascii=False)
-    print(f"Chatterbox: {len(items)} Kandidaten …", flush=True)
-    subprocess.run([py, os.path.join(SKILL, "scripts", "chatterbox_worker.py"), job], check=True)
+        s["cands"] = [os.path.join(cache, f"{s['key']}-c{k}.wav") for k in range(max_cand)]
+        s["scored"] = {}
 
-    # Beste Variante per Whisper wählen (Text-Übereinstimmung; bei Gleichstand die kürzere)
     import numpy as np
     from faster_whisper import WhisperModel
-    model = WhisperModel(cfg.get("asr_model", "medium"), device="cpu", compute_type="int8")
-    for s in todo:
-        scored = []
-        for c in s["cands"]:
+    asr = None
+
+    def score_existing(s):
+        nonlocal asr
+        for k, c in enumerate(s["cands"]):
+            if k in s["scored"] or not os.path.exists(c):
+                continue
+            asr = asr or WhisperModel(cfg.get("asr_model", "medium"), device="cpu", compute_type="int8")
             raw = subprocess.run(["ffmpeg", "-v", "error", "-i", c, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
                                  stdin=subprocess.DEVNULL, capture_output=True, check=True).stdout
             a = np.frombuffer(raw, np.int16).astype(np.float32) / 32768
-            txt = " ".join(seg.text for seg in model.transcribe(a, language="de")[0])
+            txt = " ".join(seg.text for seg in asr.transcribe(a, language="de")[0])
             score = difflib.SequenceMatcher(None, norm_words(txt), norm_words(s["text"])).ratio()
-            scored.append((score, -len(a), c, txt.strip()))
-        scored.sort(reverse=True)
-        best = scored[0]
-        flag = "" if best[0] >= 0.85 else "  <-- prüfen!"
-        print(f"  {best[0]:.2f} {s['text'][:50]!r} -> {best[3][:60]!r}{flag}")
+            s["scored"][k] = (score, len(a) / 16000, c, txt.strip())
+
+    def best(s):  # beste Übereinstimmung, bei Gleichstand die kürzere Aufnahme
+        return max(s["scored"].values(), key=lambda v: (round(v[0], 3), -v[1]))
+
+    # Runde k erzeugt Seed k+1 nur für Segmente, die noch nicht sauber sind. Sauber = Whisper erkennt den
+    # Text (>= 0.9) und die Länge ist plausibel (kein angehängtes Gebrabbel). So entstehen im Schnitt
+    # ca. 1,2 statt 2 Aufnahmen pro Segment, ohne dass eine schlechte Aufnahme durchrutscht.
+    open_ = list(todo)
+    for k in range(max_cand):
+        items = [{"text": s["text"], "ex": s["ex"], "cfg": s["cfg"], "seed": k + 1, "out": s["cands"][k]} for s in open_]
+        job = os.path.join(cache, "chatterbox-job.json")
+        json.dump({"ref": ref, "items": items}, open(job, "w", encoding="utf-8"), ensure_ascii=False)
+        print(f"Chatterbox Runde {k + 1}: {len(items)} Segmente …", flush=True)
+        subprocess.run([py, os.path.join(SKILL, "scripts", "chatterbox_worker.py"), job], check=True)
+        for s in todo:
+            score_existing(s)
+        rates = sorted(best(s)[1] / len(s["text"]) for s in todo if len(s["text"]) >= 15)
+        med = rates[len(rates) // 2] if rates else 1.0
+        open_ = [s for s in todo if best(s)[0] < 0.9 or (len(s["text"]) >= 15 and best(s)[1] / len(s["text"]) > 1.45 * med)]
+        if not open_:
+            break
+
+    for s in todo:
+        b = best(s)
+        flag = "" if b[0] >= 0.85 else "  <-- prüfen!"
+        print(f"  {b[0]:.2f} ({len(s['scored'])}x) {s['text'][:50]!r} -> {b[3][:60]!r}{flag}")
         af = TRIM.format(db=-45)
         if s["speed"] != 1.0:
             af += f",atempo={s['speed']}"
-        run(["ffmpeg", "-y", "-i", best[2], "-af", af, "-ac", "1", "-ar", str(SR), s["wav"]])
+        run(["ffmpeg", "-y", "-i", b[2], "-af", af, "-ac", "1", "-ar", str(SR), s["wav"]])
 
 
 def main(video_dir):
