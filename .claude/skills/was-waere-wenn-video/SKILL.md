@@ -17,7 +17,10 @@ description: Erstellt fertige TikTok-Videos (MP4, 1080x1920) als 3D-Low-Poly-Ges
   Schnitte), zwei große Zähler (oben SCHNITTE, unten WÜRFEL), nur ASMR-Sound, keine Stimme, kein
   Skript. Referenz: `videos/04-zwiebel-1000/`. Für ein neues Objekt: Ordner kopieren, in `scene.js`
   Form, Schale und Schnittfläche (Textur) tauschen, `plan.py` (Runden, Dauer) → `sound.py` → rendern.
-  Das ist das schnellste Format (kein Voiceover, kein `cues.py`).
+  Das ist das schnellste Format (kein Voiceover, kein `cues.py`). Ablauf pro Runde wie im Vorbild: erst
+  Scheiben (feine Linien auf der Schale, 0 Würfel), dann quer, dabei zerfällt das Objekt in Würfel.
+  Ton: echte Hack-Geräusche (`assets/audio/chops/`, Public Domain) auf jedem sichtbaren Messertreffer,
+  darunter leise italienische Musik aus `scripts/italian_music.py` (eigene Komposition, lizenzfrei).
 
 **Tempo (der Nutzer will schnell):** Skript schreiben → Voiceover **sofort** im Hintergrund starten →
 währenddessen Szene bauen (vorhandene Szenen kopieren statt neu bauen) → Szene mit vorläufigen Cues

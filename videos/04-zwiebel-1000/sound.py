@@ -1,10 +1,11 @@
-"""ASMR-Sound für „Zwiebel, 1.000 Schnitte“ aus rounds.json: jeder Schnitt ein Hack aufs Brett mit
-knackender Zwiebel (wandert im Stereobild mit dem Messer von links nach rechts), fallende Stücke als
-leise Klopfer, feines Rieseln beim Haufen, leises Raumrauschen. Keine Musik, keine Stimme.
+"""Sound für „Zwiebel, 1.000 Schnitte“ aus rounds.json: echte Hack-Geräusche (Aufnahme „Chopping leeks“,
+Public Domain, einzelne Hiebe in assets/audio/chops/) genau auf jedem sichtbaren Messertreffer, im
+Stereobild mit dem Messer von links nach rechts. Im 2. Durchgang fallen Würfel (Klopfer) bzw. rieselt der
+Haufen. Darunter leise italienische Restaurant-Musik (eigene Komposition, italian_music.py).
 
 Aufruf (im Videoordner): python3 -I sound.py  ->  assets/audio/sound.wav (48 kHz, Stereo, ca. -16 LUFS)
 """
-import json, subprocess
+import glob, json, os, subprocess, wave
 
 import numpy as np
 from scipy import signal
@@ -12,21 +13,35 @@ from scipy import signal
 SR = 48000
 RNG = np.random.default_rng(1000)
 plan = json.load(open("rounds.json"))
-N_SAMP = int(plan["duration"] * SR) + SR
+DUR = plan["duration"]
+N_SAMP = int(DUR * SR) + SR
 L, Rch = np.zeros(N_SAMP), np.zeros(N_SAMP)
+MUSIC_DB = -12  # Musik so viel leiser als die Schnitte (beide vorher auf -16 LUFS)
+
+
+def read(path):
+    with wave.open(path) as w:
+        x = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(float) / 32768
+        return x.reshape(-1, w.getnchannels()) if w.getnchannels() > 1 else x
+
+
+def write(path, x):
+    with wave.open(path, "wb") as w:
+        w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes())
+
+
+def loudnorm(src, dst, i=-16):
+    subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", src, "-af", f"loudnorm=I={i}:TP=-1.5:LRA=11", "-ar", str(SR), dst], check=True)
 
 
 def bp(x, lo, hi, order=2):
     return signal.sosfilt(signal.butter(order, [lo, hi], btype="band", fs=SR, output="sos"), x)
 
 
-def lp(x, fc, order=2):
-    return signal.sosfilt(signal.butter(order, fc, btype="low", fs=SR, output="sos"), x)
-
-
 def place(x, t, gain_db, pan):
     i = int(t * SR)
-    if i >= N_SAMP:
+    if i < 0 or i >= N_SAMP:
         return
     x = x[: N_SAMP - i] * 10 ** (gain_db / 20)
     a = (pan + 1) / 2 * np.pi / 2  # konstante Leistung
@@ -34,76 +49,102 @@ def place(x, t, gain_db, pan):
     Rch[i:i + len(x)] += x * np.sin(a)
 
 
-# Bausteine (vorab erzeugt, pro Ereignis leicht variiert)
-def chop(var):
-    n = int(0.09 * SR)
-    t = np.arange(n) / SR
-    f = 190 + 50 * var
-    body = np.sin(2 * np.pi * f * t) * np.exp(-t * 70)                       # Messer trifft Holz
-    click = bp(RNG.standard_normal(n), 2500, 7000) * np.exp(-t * 260) * 0.8  # Schneide
-    crunch = bp(RNG.standard_normal(n), 1400, 6000) * np.exp(-t * 55) * (0.5 + 0.4 * RNG.random())  # Zwiebel knackt
-    x = body * 0.9 + click + crunch
-    return x / (np.max(np.abs(x)) + 1e-9)
+# Echte Hiebe: etwas mehr Biss (1,2–3 kHz) und kein Rumpeln, je Treffer leicht andere Tonhöhe
+HP = signal.butter(2, 110, "high", fs=SR, output="sos")
+CHOPS = []
+for f in sorted(glob.glob("assets/audio/chops/chop*.wav")):
+    x = signal.sosfilt(HP, read(f))
+    x = x + 0.5 * bp(x, 1200, 3000)
+    CHOPS.append(x / (np.max(np.abs(x)) + 1e-9))
 
 
-CHOPS = [chop(v) for v in np.linspace(-1, 1, 12)]
+def chop():
+    x = CHOPS[RNG.integers(len(CHOPS))]
+    r = 2 ** (RNG.normal(0, 0.05))  # ca. ±1 Halbton Streuung
+    idx = np.arange(0, len(x) - 1, r)
+    return np.interp(idx, np.arange(len(x)), x)
+
+
+def thud():  # neue Zwiebel wird hingelegt: tiefer, weicher Hieb
+    x = CHOPS[0]
+    idx = np.arange(0, len(x) - 1, 0.62)
+    y = signal.sosfilt(signal.butter(2, 700, "low", fs=SR, output="sos"), np.interp(idx, np.arange(len(x)), x))
+    return y / (np.max(np.abs(y)) + 1e-9)
 
 
 def tap():  # fallendes Stück auf dem Brett
     n = int(0.03 * SR)
     t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * (500 + 400 * RNG.random()) * t) * np.exp(-t * 180) + bp(RNG.standard_normal(n), 2000, 6000) * np.exp(-t * 300) * 0.5
+    x = np.sin(2 * np.pi * (550 + 450 * RNG.random()) * t) * np.exp(-t * 190) + bp(RNG.standard_normal(n), 2000, 6500) * np.exp(-t * 320) * 0.5
     return x / (np.max(np.abs(x)) + 1e-9)
+
+
+def rustle(dur):  # feines Rieseln (viele winzige Würfel): Körner statt Rauschen
+    n = int(dur * SR)
+    x = np.zeros(n)
+    k = int(dur * 900)
+    pos = RNG.integers(0, max(1, n - 200), k)
+    amp = RNG.random(k) ** 2
+    for p, a in zip(pos, amp):
+        x[p] += a * (1 if RNG.random() < 0.5 else -1)
+    x = bp(x, 1800, 9000)
+    env = np.minimum(1, np.arange(n) / (0.05 * SR)) * np.minimum(1, (n - np.arange(n)) / (0.15 * SR))
+    return x * env / (np.max(np.abs(x)) + 1e-9)
 
 
 TAPS = [tap() for _ in range(16)]
 
 
-def rustle(dur):  # feines Rieseln (viele winzige Würfel)
-    n = int(dur * SR)
-    x = bp(RNG.standard_normal(n), 1800, 9000) * (0.6 + 0.4 * RNG.random(n))
-    env = np.minimum(1, np.arange(n) / (0.05 * SR)) * np.minimum(1, (n - np.arange(n)) / (0.12 * SR))
-    return x * env / (np.max(np.abs(x)) + 1e-9)
-
-
-def thud():  # neue Zwiebel wird hingelegt
-    n = int(0.18 * SR)
-    t = np.arange(n) / SR
-    x = np.sin(2 * np.pi * (95 + 20 * RNG.random()) * t) * np.exp(-t * 28) + lp(RNG.standard_normal(n), 900) * np.exp(-t * 45) * 0.5
-    return x / (np.max(np.abs(x)) + 1e-9)
+def hits(a, b, rate):
+    """Treffer des sichtbaren Messers (wie scene.js: Phase +0.2, Treffer bei 0.45)."""
+    vis = min(rate, 9.0)
+    k, out = 0, []
+    while True:
+        t = a + (k + 0.25) / vis
+        if t >= b:
+            return out, vis
+        out.append(t)
+        k += 1
 
 
 for rd in plan["rounds"]:
-    n, c0, c1 = rd["n"], rd["cut0"], rd["cut1"]
-    if c0 > rd["t0"]:
-        place(thud(), rd["t0"] + 0.02, -12, 0.0)
-    rate = n / (c1 - c0)
-    g = -4 - 10 * np.log10(max(1.0, rate / 6))  # bei sehr schnellen Schnitten leiser pro Hieb, Summe bleibt ähnlich
-    k = (n // 3 + 1)
-    for i in range(n):
-        u = (i + 0.5) / n
-        t = c0 + u * (c1 - c0) + RNG.normal(0, 0.004)
-        place(CHOPS[RNG.integers(len(CHOPS))], t, g + RNG.normal(0, 1.2), -0.45 + 0.9 * u)
-    if k <= 18:  # grobe Würfel: einzelne Klopfer beim Fallen
-        m = min(260, int(k * k * 0.8))
-        for _ in range(m):
-            u = RNG.random()
-            place(TAPS[RNG.integers(len(TAPS))], c0 + u * (c1 - c0) + 0.12 + RNG.random() * 0.25, -22 - 6 * RNG.random(), -0.5 + u)
-    else:  # feiner Haufen: Rieseln während des Schnitts, leiser Nachklang
-        place(rustle(c1 - c0 + 0.35), c0 + 0.05, -20, 0.0)
+    n, n1 = rd["n"], rd["n1"]
+    if rd["cut0"] > rd["t0"]:
+        place(thud(), rd["t0"] + 0.02, -10, 0.0)
+    for ph, (a, b, cuts) in enumerate([(rd["cut0"], rd["cutM"], n1), (rd["cutM"], rd["cut1"], n - n1)]):
+        ts, vis = hits(a, b, cuts / (b - a))
+        fast = cuts / (b - a) > 9
+        for t in ts:
+            u = (t - a) / (b - a)
+            pan = -0.35 + 0.7 * u
+            place(chop(), t + RNG.normal(0, 0.003), -3 + RNG.normal(0, 1.0), pan)
+            if fast:  # viele Schnitte pro Hieb: zwei leise Nachschläge machen es dichter
+                for dt in (0.018, 0.037):
+                    place(chop(), t + dt, -13 + RNG.normal(0, 1.5), pan)
+        if ph == 1:  # 2. Durchgang: Stücke fallen
+            k = n1 + 1
+            if k <= 30:
+                for _ in range(min(240, k * 8)):
+                    u = RNG.random()
+                    place(TAPS[RNG.integers(len(TAPS))], a + u * (b - a) + 0.1 + RNG.random() * 0.25, -21 - 6 * RNG.random(), -0.5 + u)
+            else:
+                place(rustle(b - a + 0.35), a + 0.05, -17, 0.0)
     if rd["final"]:
-        place(rustle(1.6), c1, -24, 0.0)
+        place(rustle(1.8), rd["cut1"], -22, 0.0)
 
-# leises Raumrauschen gegen digitale Stille
-room = lp(RNG.standard_normal(N_SAMP), 3000) * 10 ** (-52 / 20)
-L += room
-Rch += room * 0.9
-out = np.stack([L, Rch], axis=1)[: int(plan["duration"] * SR)]
-out = out / (np.max(np.abs(out)) + 1e-9) * 0.7
-raw = "assets/audio/sound-raw.wav"
-import wave
-with wave.open(raw, "wb") as w:
-    w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
-    w.writeframes((out * 32767).astype(np.int16).tobytes())
-subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", raw, "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", str(SR), "assets/audio/sound.wav"], check=True)
-print("assets/audio/sound.wav geschrieben")
+# Schnitte-Spur auf -16 LUFS, Musik (gleich lang) auf -16 LUFS, Musik leise darunter
+os.makedirs("assets/audio", exist_ok=True)
+fx = np.stack([L, Rch], axis=1)[: int(DUR * SR)]
+fx = fx / (np.max(np.abs(fx)) + 1e-9) * 0.7
+write("assets/audio/fx-raw.wav", fx)
+loudnorm("assets/audio/fx-raw.wav", "assets/audio/fx.wav")
+music_py = os.path.normpath(os.path.join(os.getcwd(), "..", "..", ".claude", "skills", "was-waere-wenn-video", "scripts", "italian_music.py"))
+subprocess.run(["python3", "-I", music_py, str(DUR), "assets/audio/music.wav"], check=True)
+fx, mu = read("assets/audio/fx.wav"), read("assets/audio/music.wav")
+m = min(len(fx), len(mu))
+mix = fx[:m] + mu[:m] * 10 ** (MUSIC_DB / 20)
+write("assets/audio/sound-raw.wav", mix / (np.max(np.abs(mix)) + 1e-9) * 0.8)
+loudnorm("assets/audio/sound-raw.wav", "assets/audio/sound.wav")
+for f in ("fx-raw.wav", "fx.wav", "sound-raw.wav", "music.wav"):
+    os.remove("assets/audio/" + f)
+print("assets/audio/sound.wav geschrieben (Musik:", MUSIC_DB, "dB)")
