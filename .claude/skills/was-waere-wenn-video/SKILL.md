@@ -13,6 +13,11 @@ description: Erstellt fertige TikTok-Videos (MP4, 1080x1920) als 3D-Low-Poly-Ges
 - **C – Gruselserie (Fiktion)** ist eine ausgedachte Horror-Geschichte in mehreren Teilen. Jeder Teil
   endet auf dem spannendsten Moment (Cliffhanger) mit der Endcard „Teil N+1 · Was machst du jetzt?“.
   Referenz: `videos/03-haus-13-teil-1/`, Serienplan `videos/serie-haus-13.md`. Im HUD steht „FIKTION“.
+- **D – Satisfying (ohne Stimme)**: ein Objekt wird in Runden immer feiner geschnitten (1 → 1.000
+  Schnitte), zwei große Zähler (oben SCHNITTE, unten WÜRFEL), nur ASMR-Sound, keine Stimme, kein
+  Skript. Referenz: `videos/04-zwiebel-1000/`. Für ein neues Objekt: Ordner kopieren, in `scene.js`
+  Form, Schale und Schnittfläche (Textur) tauschen, `plan.py` (Runden, Dauer) → `sound.py` → rendern.
+  Das ist das schnellste Format (kein Voiceover, kein `cues.py`).
 
 **Tempo (der Nutzer will schnell):** Skript schreiben → Voiceover **sofort** im Hintergrund starten →
 währenddessen Szene bauen (vorhandene Szenen kopieren statt neu bauen) → Szene mit vorläufigen Cues
